@@ -7,13 +7,13 @@ assignees: ''
 
 ---
 
-#🔥이슈 번호:
+## 🔥이슈 번호:
 
-##📝To-do
--[ ] todo
--[ ] todo
+## 📝 To-do
+- [ ] todo
+- [ ] todo
 
-##💡 Description
+## 💡 Description
 설명을 작성하세요.
 
 ## ETC
