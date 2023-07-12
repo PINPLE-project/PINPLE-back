@@ -7,6 +7,11 @@ module.exports = {
   SERVER_ERROR: { isSuccess: false, code: 4001, message: "서버 에러" },
 
   // 요청 오류
+  ALERT_EMPTY: {
+    isSuccess: false,
+    code: 400,
+    message: "존재하지 않는 알림입니다.",
+  },
   ALERT_PLACE_EMPTY: {
     isSuccess: false,
     code: 400,

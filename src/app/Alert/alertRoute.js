@@ -9,4 +9,7 @@ module.exports = function (app) {
 
   // 2. 알림 설정 API
   app.post("/app/alert", alert.postAlert);
+
+  // 3. 알림 삭제 API
+  app.delete("/app/alert", alert.deleteAlert);
 };

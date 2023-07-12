@@ -17,14 +17,32 @@ exports.createAlert = async function (userIdFromJWT, place, time) {
     }
 
     const connection = await pool.getConnection(async (conn) => conn);
-    const alertIdResult = await alertDao.insertAlert(connection, AlertParams);
+    const createAlertResult = await alertDao.insertAlert(
+      connection,
+      AlertParams
+    );
 
-    console.log(`추가된 알림 : ${alertIdResult[0].insertId}`);
+    console.log(`추가된 알림 : ${createAlertResult[0].insertId}`);
 
     connection.release();
     return response(baseResponse.SUCCESS);
   } catch (err) {
     logger.error(`App - createAlert Service error\n: ${err.message}`);
     return errResponse(baseResponse.DB_ERROR);
+  }
+};
+
+exports.deleteAlert = async function (alertId) {
+  try {
+    const connection = await pool.getConnection(async (conn) => conn);
+    const deleteAlertResult = await alertDao.deleteAlert(connection, alertId);
+
+    console.log(`삭제된 알림 : ${deleteAlertResult[0][0]["alertId"]}`);
+
+    connection.release();
+    return response(baseResponse.SUCCESS, deleteAlertResult[0]);
+  } catch (err) {
+    logger.error(`App - deleteAlert Service error\n: ${err.message}`);
+    return errResponse(baseResponse.ALERT_EMPTY);
   }
 };

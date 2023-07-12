@@ -15,7 +15,7 @@ exports.test = async function (req, res) {
 
 /**
  * API No. 1
- * Name: 설정된 알림 전체 조회
+ * Name: 설정된 알림 전체 조회 API
  * [GET] /app/alert
  */
 
@@ -32,7 +32,7 @@ exports.getAlert = async function (req, res) {
 
 /**
  * API No. 2
- * Name: 알림 설정
+ * Name: 알림 추가 API
  * [POST] /app/alert
  */
 
@@ -80,5 +80,21 @@ exports.postAlert = async function (req, res) {
     place,
     time
   );
+  return res.send(alertResponse);
+};
+
+/**
+ * API No. 3
+ * Name: 알림 삭제 API
+ * [DELETE] /app/alert
+ */
+
+exports.deleteAlert = async function (req, res) {
+  /**
+   * Body: alertId
+   */
+  const { alertId } = req.body;
+
+  const alertResponse = await alertService.deleteAlert(alertId);
   return res.send(alertResponse);
 };
