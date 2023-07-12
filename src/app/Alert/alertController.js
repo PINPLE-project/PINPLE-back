@@ -1,6 +1,7 @@
 const baseResponse = require("../../../config/responseStatus");
 const { response, errResponse } = require("../../../config/response");
 const alertService = require("../../app/Alert/alertService");
+const alertProvider = require("../../app/Alert/alertProvider");
 
 /**
  * API No. 0
@@ -18,15 +19,16 @@ exports.test = async function (req, res) {
  * [GET] /app/alert
  */
 
-// exports.getAlert = async function (req, res) {
-//   /**
-//    * JWT: userId
-//    */
-//   const userIdFromJWT = req.verifiedToken.userId;
-//   const alertList = await alertProvider.retrieveAlertList(userIdFromJWT);
+exports.getAlert = async function (req, res) {
+  /**
+   * JWT: userIdFromJWT
+   */
+  const { userIdFromJWT } = req.body;
+  // const userIdFromJWT = req.verifiedToken.userId;
 
-//   return res.send(response(baseResponse.SUCCESS, alertList));
-// };
+  const alertList = await alertProvider.retrieveAlertList(userIdFromJWT);
+  return res.send(response(baseResponse.SUCCESS, alertList[0]));
+};
 
 /**
  * API No. 2

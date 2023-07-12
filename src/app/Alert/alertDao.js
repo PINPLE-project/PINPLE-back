@@ -1,3 +1,18 @@
+// userId에 대해 설정된 알림 모두 조회
+async function selectSetupAlert(connection, userIdFromJWT) {
+  const selectSetupAlertListQuery = `
+                                    SELECT place, time
+                                    FROM Alert
+                                    WHERE userId = ? AND status = 0
+                                    ORDER BY time;
+                                    `;
+  const selectAlertRow = await connection.query(
+    selectSetupAlertListQuery,
+    userIdFromJWT
+  );
+  return selectAlertRow;
+}
+
 // 알림 추가
 async function insertAlert(connection, AlertParams) {
   const insertAlertQuery = `
@@ -22,4 +37,4 @@ async function selectSetupAlertForCheck(connection, AlertParams) {
   return selectAlertRow;
 }
 
-module.exports = { insertAlert, selectSetupAlertForCheck };
+module.exports = { selectSetupAlert, insertAlert, selectSetupAlertForCheck };
