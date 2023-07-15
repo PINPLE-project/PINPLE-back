@@ -1,7 +1,7 @@
 const { pool } = require("../../../config/database");
 const alertDao = require("./alertDao");
 
-exports.retrieveAlertList = async function (userIdFromJWT) {
+exports.retrieveSetupAlertList = async function (userIdFromJWT) {
   const connection = await pool.getConnection(async (conn) => conn);
   const alertListResult = await alertDao.selectSetupAlert(
     connection,

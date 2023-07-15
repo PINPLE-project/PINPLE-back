@@ -16,17 +16,17 @@ exports.test = async function (req, res) {
 /**
  * API No. 1
  * Name: 설정된 알림 전체 조회 API
- * [GET] /app/alert
+ * [GET] /app/alert/setup
  */
 
-exports.getAlert = async function (req, res) {
+exports.getSetupAlert = async function (req, res) {
   /**
    * JWT: userIdFromJWT
    */
   const { userIdFromJWT } = req.body;
   // const userIdFromJWT = req.verifiedToken.userId;
 
-  const alertList = await alertProvider.retrieveAlertList(userIdFromJWT);
+  const alertList = await alertProvider.retrieveSetupAlertList(userIdFromJWT);
   return res.send(response(baseResponse.SUCCESS, alertList[0]));
 };
 
@@ -86,14 +86,14 @@ exports.postAlert = async function (req, res) {
 /**
  * API No. 3
  * Name: 알림 삭제 API
- * [DELETE] /app/alert
+ * [DELETE] /app/alert/:alertId
  */
 
 exports.deleteAlert = async function (req, res) {
   /**
-   * Body: alertId
+   * Path Variable: alertId
    */
-  const { alertId } = req.body;
+  const alertId = req.params.alertId;
 
   const alertResponse = await alertService.deleteAlert(alertId);
   return res.send(alertResponse);
@@ -102,7 +102,7 @@ exports.deleteAlert = async function (req, res) {
 /**
  * API No. 4
  * Name: 알림 기록 전체 조회 API
- * [DELETE] /app/alert/record
+ * [GET] /app/alert/record
  */
 
 exports.getRecordAlert = async function (req, res) {
@@ -125,7 +125,7 @@ exports.getRecordAlert = async function (req, res) {
 exports.getRecordAlertByDate = async function (req, res) {
   /**
    * JWT: userIdFromJWT
-   * path variable: date
+   * Path Variable: date
    */
   const { userIdFromJWT } = req.body;
   const date = req.params.date;
