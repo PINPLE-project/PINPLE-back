@@ -13,6 +13,6 @@ module.exports = function (app) {
   // 3. 알림 삭제 API
   app.delete("/app/alert", alert.deleteAlert);
 
-  // 4. 알림 기록 조회 API
-  app.get("/app/alert/record", alert.getRecordAlert);
+  // 5. 알림 기록 날짜별 조회 API
+  app.get("/app/alert/record/:date", alert.getRecordAlertByDate);
 };

@@ -100,27 +100,28 @@ exports.deleteAlert = async function (req, res) {
 };
 
 /**
- * API No. 4
- * Name: 알림 기록 조회 API
- * [GET] /app/alert/record
+ * API No. 5
+ * Name: 알림 기록 날짜별 조회 API
+ * [GET] /app/alert/record/:date
  */
 
-exports.getRecordAlert = async function (req, res) {
+exports.getRecordAlertByDate = async function (req, res) {
   /**
    * JWT: userIdFromJWT
-   * body: date
+   * path variable: date
    */
-  const { userIdFromJWT, date } = req.body;
+  const { userIdFromJWT } = req.body;
+  const date = req.params.date;
   // const userIdFromJWT = req.verifiedToken.userId;
 
   const isValidateDate = (date) => {
-    return /^\d{4}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$/.test(date);
+    return /^\d{4}(0[1-9]|1[012])(0[1-9]|[12][0-9]|3[01])$/.test(date);
   };
 
   const isProperDate = (date) => {
     const rYY = Number(date.substring(0, 4));
-    const rMM = Number(date.substring(5, 7)) - 1;
-    const rDD = Number(date.substring(8, 10));
+    const rMM = Number(date.substring(4, 6)) - 1;
+    const rDD = Number(date.substring(6, 8));
 
     const now = new Date();
     const ndate = new Date(rYY, rMM, rDD);
@@ -136,6 +137,7 @@ exports.getRecordAlert = async function (req, res) {
   if (!isProperDate(date))
     return res.send(errResponse(baseResponse.ALERT_DATE_WRONG));
 
+  date.replace(/(\d{4})(\d{2})(\d{2})/g, "$1-$2-$3");
   const alertList = await alertProvider.retrieveRecordAlertList(
     userIdFromJWT,
     date
