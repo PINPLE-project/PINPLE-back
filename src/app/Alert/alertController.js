@@ -71,7 +71,7 @@ exports.postAlert = async function (req, res) {
   // 시간 형식 체크
   if (!isValidateTime(time))
     return res.send(errResponse(baseResponse.ALERT_TIME_ERROR_TYPE));
-  // 시간이 현재보다 이전인지 체크
+  // 시간 유효성 체크
   if (!isProperTime(time))
     return res.send(errResponse(baseResponse.ALERT_TIME_WRONG));
 
@@ -97,4 +97,48 @@ exports.deleteAlert = async function (req, res) {
 
   const alertResponse = await alertService.deleteAlert(alertId);
   return res.send(alertResponse);
+};
+
+/**
+ * API No. 4
+ * Name: 알림 기록 조회 API
+ * [GET] /app/alert/record
+ */
+
+exports.getRecordAlert = async function (req, res) {
+  /**
+   * JWT: userIdFromJWT
+   * body: date
+   */
+  const { userIdFromJWT, date } = req.body;
+  // const userIdFromJWT = req.verifiedToken.userId;
+
+  const isValidateDate = (date) => {
+    return /^\d{4}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$/.test(date);
+  };
+
+  const isProperDate = (date) => {
+    const rYY = Number(date.substring(0, 4));
+    const rMM = Number(date.substring(5, 7)) - 1;
+    const rDD = Number(date.substring(8, 10));
+
+    const now = new Date();
+    const ndate = new Date(rYY, rMM, rDD);
+
+    if (ndate - now <= 0) return true;
+    else return false;
+  };
+
+  // 날짜 형식 체크
+  if (!isValidateDate(date))
+    return res.send(errResponse(baseResponse.ALERT_DATE_ERROR_TYPE));
+  // 날짜 유효성 체크
+  if (!isProperDate(date))
+    return res.send(errResponse(baseResponse.ALERT_DATE_WRONG));
+
+  const alertList = await alertProvider.retrieveRecordAlertList(
+    userIdFromJWT,
+    date
+  );
+  return res.send(response(baseResponse.SUCCESS, alertList[0]));
 };

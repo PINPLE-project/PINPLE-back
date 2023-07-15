@@ -13,6 +13,21 @@ async function selectSetupAlert(connection, userIdFromJWT) {
   return selectAlertRow;
 }
 
+// userId에 대해 날짜에 해당하는 알림 기록 조회
+async function selectRecordAlert(connection, userIdFromJWT, date) {
+  const selectRecordAlertListQuery = `
+                                    SELECT place, time, congestion
+                                    FROM Alert
+                                    WHERE userId = ? AND status = 1 AND DATE(time) = ?
+                                    ORDER BY time;
+                                    `;
+  const selectAlertRow = await connection.query(selectRecordAlertListQuery, [
+    userIdFromJWT,
+    date,
+  ]);
+  return selectAlertRow;
+}
+
 // 알림 추가
 async function insertAlert(connection, AlertParams) {
   const insertAlertQuery = `
@@ -56,6 +71,7 @@ async function deleteAlert(connection, alertId) {
 
 module.exports = {
   selectSetupAlert,
+  selectRecordAlert,
   insertAlert,
   selectSetupAlertForCheck,
   deleteAlert,

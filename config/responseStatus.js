@@ -27,10 +27,20 @@ module.exports = {
     code: 400,
     message: "이미 존재하는 알림입니다.",
   },
+  ALERT_DATE_WRONG: {
+    isSuccess: false,
+    code: 400,
+    message: "현재 날짜 이후의 알림은 조회할 수 없습니다.",
+  },
   ALERT_TIME_WRONG: {
     isSuccess: false,
     code: 400,
     message: "현재 시간보다 이전의 알림은 설정할 수 없습니다.",
+  },
+  ALERT_DATE_ERROR_TYPE: {
+    isSuccess: false,
+    code: 400,
+    message: "날짜 형식을 정확히 입력해 주세요.",
   },
   ALERT_TIME_ERROR_TYPE: {
     isSuccess: false,
