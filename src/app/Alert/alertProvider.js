@@ -12,9 +12,20 @@ exports.retrieveAlertList = async function (userIdFromJWT) {
   return alertListResult;
 };
 
-exports.retrieveRecordAlertList = async function (userIdFromJWT, date) {
+exports.retrieveRecordAlertList = async function (userIdFromJWT) {
   const connection = await pool.getConnection(async (conn) => conn);
   const alertListResult = await alertDao.selectRecordAlert(
+    connection,
+    userIdFromJWT
+  );
+  connection.release();
+
+  return alertListResult;
+};
+
+exports.retrieveRecordAlertListByDate = async function (userIdFromJWT, date) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  const alertListResult = await alertDao.selectRecordAlertByDate(
     connection,
     userIdFromJWT,
     date

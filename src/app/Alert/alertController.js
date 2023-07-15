@@ -100,6 +100,23 @@ exports.deleteAlert = async function (req, res) {
 };
 
 /**
+ * API No. 4
+ * Name: 알림 기록 전체 조회 API
+ * [DELETE] /app/alert/record
+ */
+
+exports.getRecordAlert = async function (req, res) {
+  /**
+   * JWT: userIdFromJWT
+   */
+  const { userIdFromJWT } = req.body;
+  // const userIdFromJWT = req.verifiedToken.userId;
+
+  const alertList = await alertProvider.retrieveRecordAlertList(userIdFromJWT);
+  return res.send(response(baseResponse.SUCCESS, alertList[0]));
+};
+
+/**
  * API No. 5
  * Name: 알림 기록 날짜별 조회 API
  * [GET] /app/alert/record/:date
@@ -138,7 +155,8 @@ exports.getRecordAlertByDate = async function (req, res) {
     return res.send(errResponse(baseResponse.ALERT_DATE_WRONG));
 
   date.replace(/(\d{4})(\d{2})(\d{2})/g, "$1-$2-$3");
-  const alertList = await alertProvider.retrieveRecordAlertList(
+
+  const alertList = await alertProvider.retrieveRecordAlertListByDate(
     userIdFromJWT,
     date
   );
