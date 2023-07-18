@@ -23,24 +23,25 @@ exports.getUsers = async function (req, res) {
         // JSON 데이터를 가공하거나 필요한 처리를 수행
         const users = JSON.parse(jsonData);
 
-        // 성공 응답을 보냄
-        console.log(JSON.stringify(users, null, 4)); // JSON 데이터 콘솔 출력
+        // 필요한 정보 추출하여 콘솔에 출력
+        const cityData = users['SeoulRtd.citydata']['CITYDATA'];
 
-        // 필요한 데이터 추출
-        const extractedData = users.SeoulRtd.citydata.map(item => ({
-            areaName: item.AREA_NM._text,
-            congestionLevel: item.AREA_CONGEST_LVL._text
-        }));
+        const extractedData = {
+            AREA_NM: cityData['AREA_NM']['_text'],
+            AREA_CONGEST_LVL: cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_LVL']['_text'],
+            AREA_CONGEST_MSG: cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_MSG']['_text']
+        };
 
-        // 데이터베이스에 저장
-        for (const data of extractedData) {
-            await userProvider.insertUser(data.areaName, data.congestionLevel);
-        }
+        console.log("Extracted Data:", extractedData);
+        
+        // 프론트엔드에 전송할 데이터 구성
+        const responseData = {
+            AREA_NM: cityData['AREA_NM']['_text'],
+            AREA_CONGEST_LVL: cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_LVL']['_text'],
+            AREA_CONGEST_MSG: cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_MSG']['_text']
+        };
 
-        // 성공 응답을 보냄
-        console.log('데이터가 MySQL에 저장되었습니다.');
-
-        return res.send(response(responseStatus.SUCCESS));
+       return res.send(response(responseStatus.SUCCESS));
     } catch (error) {
         // 에러 응답을 보냄
         return res.send(errResponse(responseStatus.SERVER_ERROR));
