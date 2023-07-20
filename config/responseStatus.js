@@ -47,4 +47,9 @@ module.exports = {
     code: 400,
     message: "날짜+시간 형식을 정확히 입력해 주세요.",
   },
+  PUSH_ALERT_FAIL: {
+    isSuccess: false,
+    code: 400,
+    message: "푸시 알림을 보내는 데 실패하였습니다.",
+  },
 };

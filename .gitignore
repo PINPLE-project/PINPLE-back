@@ -4,6 +4,9 @@ config/secret.js
 package-lock.json
 .DS_Store
 
+// 프로젝트 비공개 키 파일
+pinple-24129-firebase-adminsdk-kyntj-da88679fe6.json
+
 log/*
 logs
 *.log

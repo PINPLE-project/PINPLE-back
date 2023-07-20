@@ -18,4 +18,7 @@ module.exports = function (app) {
 
   // 5. 알림 기록 날짜별 조회 API
   app.get("/app/alert/record/:date", alert.getRecordAlertByDate);
+
+  // 6. 알림 울림 API
+  app.get("/app/alert/push", alert.getPushAlert);
 };
