@@ -35,6 +35,17 @@ exports.retrieveRecordAlertListByDate = async function (userIdFromJWT, date) {
   return alertListResult;
 };
 
+exports.retrieveDeviceToken = async function (userIdFromJWT) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  const deviceToken = await alertDao.selectDeviceToken(
+    connection,
+    userIdFromJWT
+  );
+  connection.release();
+
+  return deviceToken[0][0]["deviceToken"];
+};
+
 exports.alertCheck = async function (AlertParams) {
   const connection = await pool.getConnection(async (conn) => conn);
   const alertCheckResult = await alertDao.selectSetupAlertForCheck(

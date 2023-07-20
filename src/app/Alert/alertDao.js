@@ -80,8 +80,18 @@ async function deleteAlert(connection, alertId) {
                             `;
   selectAlertRow = await connection.query(selectAlertQuery, alertId);
   deleteAlertRow = await connection.query(deleteAlertQuery, alertId);
-
   return selectAlertRow;
+}
+
+// 디바이스 토큰 조회
+async function selectDeviceToken(connection, userIdFromJWT) {
+  const selectDeviceTokenQuery = `
+                                  SELECT deviceToken
+                                  FROM User
+                                  WHERE userId = ?;
+                                  `;
+  deviceToken = await connection.query(selectDeviceTokenQuery, userIdFromJWT);
+  return deviceToken;
 }
 
 module.exports = {
@@ -91,4 +101,5 @@ module.exports = {
   insertAlert,
   selectSetupAlertForCheck,
   deleteAlert,
+  selectDeviceToken,
 };

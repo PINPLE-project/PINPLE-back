@@ -79,8 +79,8 @@ exports.postAlert = async function (req, res) {
     return res.send(errResponse(baseResponse.ALERT_TIME_WRONG));
 
   // 사용자가 설정한 시간에 알림 푸시
-  let deviceToken = `토큰값입력`; // userId를 이용하여 db에서 가져온다.
-  let message = {
+  const deviceToken = await alertProvider.retrieveDeviceToken(userIdFromJWT);
+  const message = {
     notification: {
       title: pushAlertMessage.title,
       body: pushAlertMessage.body,
