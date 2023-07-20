@@ -201,36 +201,3 @@ exports.getRecordAlertByDate = async function (req, res) {
   );
   return res.send(response(baseResponse.SUCCESS, alertList[0]));
 };
-
-/**
- * API No. 6
- * Name: 알림 울림 API
- * [GET] /app/alert/push
- */
-
-exports.getPushAlert = async function (req, res) {
-  /**
-   * JWT: userIdFromJWT
-   */
-  let deviceToken = `토큰값입력`; // userId를 이용하여 db에서 가져온다.
-
-  let message = {
-    notification: {
-      title: pushAlertMessage.title,
-      body: pushAlertMessage.body,
-    },
-    token: deviceToken,
-  };
-
-  admin
-    .messaging()
-    .send(message)
-    .then(function (response) {
-      console.log("Successfully sent message: : ", response);
-      return res.send(response(baseResponse.SUCCESS));
-    })
-    .catch(function (err) {
-      console.log("Error Sending message!!! : ", err);
-      return res.send(errResponse(baseResponse.PUSH_ALERT_FAIL));
-    });
-};
