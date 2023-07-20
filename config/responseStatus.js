@@ -52,4 +52,9 @@ module.exports = {
     code: 400,
     message: "푸시 알림을 보내는 데 실패하였습니다.",
   },
+  PUSH_ALERT_DELETED: {
+    isSuccess: false,
+    code: 400,
+    message: "알림이 삭제되어 푸시 알림을 보낼 수 없습니다.",
+  },
 };

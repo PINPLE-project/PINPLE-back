@@ -1,3 +1,4 @@
+const schedule = require("node-schedule");
 const baseResponse = require("../../../config/responseStatus");
 const { response, errResponse } = require("../../../config/response");
 const admin = require("../../../config/pushConnect");
@@ -77,11 +78,47 @@ exports.postAlert = async function (req, res) {
   if (!isProperTime(time))
     return res.send(errResponse(baseResponse.ALERT_TIME_WRONG));
 
+  // 사용자가 설정한 시간에 알림 푸시
+  let deviceToken = `토큰값입력`; // userId를 이용하여 db에서 가져온다.
+  let message = {
+    notification: {
+      title: pushAlertMessage.title,
+      body: pushAlertMessage.body,
+    },
+    token: deviceToken,
+  };
+
+  const datetime = new Date(time);
+  schedule.scheduleJob(datetime, async function () {
+    const AlertParams = [userIdFromJWT, place, time];
+    const alertRows = await alertProvider.alertCheck(AlertParams);
+
+    // 알림이 삭제되지 않고 유효하다면 푸시 알림 전송
+    if (alertRows[0].length) {
+      console.log(datetime, "에 설정한 푸시 알림 전송 완료!");
+      admin
+        .messaging()
+        .send(message)
+        .then(function (response) {
+          console.log("Successfully sent message: : ", response);
+          return res.send(response(baseResponse.SUCCESS));
+        })
+        .catch(function (err) {
+          console.log("Error Sending message!!! : ", err);
+          return res.send(errResponse(baseResponse.PUSH_ALERT_FAIL));
+        });
+    } else {
+      console.log("Error Sending message!!! : ");
+      return res.send(errResponse(baseResponse.PUSH_ALERT_DELETED));
+    }
+  });
+
   const alertResponse = await alertService.createAlert(
     userIdFromJWT,
     place,
     time
   );
+
   return res.send(alertResponse);
 };
 
