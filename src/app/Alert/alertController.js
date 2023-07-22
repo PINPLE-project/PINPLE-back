@@ -2,7 +2,6 @@ const schedule = require("node-schedule");
 const baseResponse = require("../../../config/responseStatus");
 const { response, errResponse } = require("../../../config/response");
 const admin = require("../../../config/pushConnect");
-const { pushAlertMessage } = require("../../../config/pushMessage");
 const alertService = require("../../app/Alert/alertService");
 const alertProvider = require("../../app/Alert/alertProvider");
 
@@ -120,6 +119,7 @@ exports.postAlert = async function (req, res) {
     } else {
       console.log("Alert is deleted!!!");
     }
+    // 혼잡도 정보 알림 테이블에 반영 로직
   });
 
   const alertResponse = await alertService.createAlert(
