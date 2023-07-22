@@ -116,6 +116,22 @@ async function selectCongestionInfo(connection, place) {
   return congestionInfo;
 }
 
+// Alert 테이블에 혼잡도 정보 반영
+async function updateCongestionInfo(connection, congestionInfo, AlertParams) {
+  const updateCongestionInfoQuery = `
+                                    UPDATE Alert
+                                    SET congestionLVL = ?
+                                      , congestionMSG = ?
+                                    WHERE userId = ? AND placeId = ? AND time = ?;
+                                    `;
+  updateCongestionInfoRow = await connection.query(updateCongestionInfoQuery, [
+    congestionInfo[0][0]["placeCongestLVL"],
+    congestionInfo[0][0]["placeCongestMSG"],
+    ...AlertParams,
+  ]);
+  return updateCongestionInfoRow;
+}
+
 module.exports = {
   selectSetupAlert,
   selectRecordAlert,
@@ -126,4 +142,5 @@ module.exports = {
   selectPlaceId,
   selectDeviceToken,
   selectCongestionInfo,
+  updateCongestionInfo,
 };

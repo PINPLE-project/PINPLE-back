@@ -47,3 +47,21 @@ exports.deleteAlert = async function (alertId) {
     return errResponse(baseResponse.ALERT_EMPTY);
   }
 };
+
+exports.editAlert = async function (congestionInfo, AlertParams) {
+  try {
+    const connection = await pool.getConnection(async (conn) => conn);
+    const updateAlertResult = await alertDao.updateCongestionInfo(
+      connection,
+      congestionInfo,
+      AlertParams
+    );
+    // console.log(`업데이트된 알림 : ${updateAlertResult[0][0]["alertId"]}`);
+    connection.release();
+
+    return updateAlertResult;
+  } catch (err) {
+    logger.error(`App - EditAlert Service error\n: ${err.message}`);
+    return errResponse(baseResponse.ALERT_EMPTY);
+  }
+};

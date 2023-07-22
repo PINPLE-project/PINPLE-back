@@ -85,7 +85,7 @@ exports.postAlert = async function (req, res) {
     const AlertParams = [userIdFromJWT, placeId, time];
     const alertRows = await alertProvider.alertCheck(AlertParams);
 
-    // 알림이 삭제되지 않고 유효하다면 푸시 알림 전송
+    // 알림이 유효하다면 푸시 알림 전송
     if (alertRows[0].length) {
       const deviceToken = await alertProvider.retrieveDeviceToken(
         userIdFromJWT
@@ -94,18 +94,20 @@ exports.postAlert = async function (req, res) {
         placeName
       );
       const message = {
-        // 올바르게 찍히는지 확인 필요
         notification: {
           title:
             "현재" +
             placeName +
             "의 혼잡도는" +
-            congestionInfo[0]["placeCongestLVL"] +
+            congestionInfo[0][0]["placeCongestLVL"] +
             "입니다.",
-          body: congestionInfo[0]["placeCongestMSG"],
+          body: congestionInfo[0][0]["placeCongestMSG"],
         },
         token: deviceToken,
       };
+
+      // Alert 테이블에 혼잡도 정보 반영
+      await alertService.editAlert(congestionInfo, AlertParams);
 
       admin
         .messaging()
@@ -119,7 +121,6 @@ exports.postAlert = async function (req, res) {
     } else {
       console.log("Alert is deleted!!!");
     }
-    // 혼잡도 정보 알림 테이블에 반영 로직
   });
 
   const alertResponse = await alertService.createAlert(
