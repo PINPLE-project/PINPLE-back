@@ -56,7 +56,6 @@ exports.editAlert = async function (congestionInfo, AlertParams) {
       congestionInfo,
       AlertParams
     );
-    // console.log(`업데이트된 알림 : ${updateAlertResult[0][0]["alertId"]}`);
     connection.release();
 
     return updateAlertResult;
