@@ -46,6 +46,15 @@ exports.postAlert = async function (req, res) {
   const { userIdFromJWT, placeName, time } = req.body;
   // const userIdFromJWT = req.verifiedToken.userId;
 
+  const placeList = await alertProvider.retrievePlaceList();
+  const isValidPlace = (placeName) => {
+    const isExistPlace = placeList[0].find(function (place) {
+      return place["placeName"] === placeName;
+    });
+    if (isExistPlace) return true;
+    else return false;
+  };
+
   const isValidTime = (time) => {
     return /([0-2][0-9]{3})-([0-1][0-9])-([0-3][0-9]) ([0-5][0-9]):([0-5][0-9]):([0-5][0-9])(([\-\+]([0-1][0-9])\:00))?/.test(
       time
@@ -70,6 +79,9 @@ exports.postAlert = async function (req, res) {
   if (!placeName) return res.send(errResponse(baseResponse.ALERT_PLACE_EMPTY));
   // 시간 빈 값 체크
   if (!time) return res.send(errResponse(baseResponse.ALERT_TIME_EMPTY));
+  // 유효한 장소인지 체크
+  if (!isValidPlace(placeName))
+    return res.send(errResponse(baseResponse.ALERT_PLACE_NONEXISTENT));
   // 시간 형식 체크
   if (!isValidTime(time))
     return res.send(errResponse(baseResponse.ALERT_TIME_ERROR_TYPE));

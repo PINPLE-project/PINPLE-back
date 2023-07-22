@@ -83,6 +83,15 @@ async function deleteAlert(connection, alertId) {
   return selectAlertRow;
 }
 
+async function selectPlaces(connection) {
+  const selectPlacesQuery = `
+                              SELECT placeName
+                              FROM CityData;
+                              `;
+  let placeRows = await connection.query(selectPlacesQuery);
+  return placeRows;
+}
+
 // placeName에 해당하는 placeId 조회
 async function selectPlaceId(connection, placeName) {
   const selectPlaceIdQuery = `
@@ -101,7 +110,10 @@ async function selectDeviceToken(connection, userIdFromJWT) {
                                   FROM User
                                   WHERE userId = ?;
                                   `;
-  deviceToken = await connection.query(selectDeviceTokenQuery, userIdFromJWT);
+  const deviceToken = await connection.query(
+    selectDeviceTokenQuery,
+    userIdFromJWT
+  );
   return deviceToken;
 }
 
@@ -112,7 +124,10 @@ async function selectCongestionInfo(connection, place) {
                                     FROM CityData
                                     WHERE placeName = ?;
                                     `;
-  congestionInfo = await connection.query(selectCongestionInfoQuery, place);
+  const congestionInfo = await connection.query(
+    selectCongestionInfoQuery,
+    place
+  );
   return congestionInfo;
 }
 
@@ -125,11 +140,14 @@ async function updateCongestionInfo(connection, congestionInfo, AlertParams) {
                                       , status = 1
                                     WHERE userId = ? AND placeId = ? AND time = ?;
                                     `;
-  updateCongestionInfoRow = await connection.query(updateCongestionInfoQuery, [
-    congestionInfo[0][0]["placeCongestLVL"],
-    congestionInfo[0][0]["placeCongestMSG"],
-    ...AlertParams,
-  ]);
+  const updateCongestionInfoRow = await connection.query(
+    updateCongestionInfoQuery,
+    [
+      congestionInfo[0][0]["placeCongestLVL"],
+      congestionInfo[0][0]["placeCongestMSG"],
+      ...AlertParams,
+    ]
+  );
   return updateCongestionInfoRow;
 }
 
@@ -140,6 +158,7 @@ module.exports = {
   insertAlert,
   selectSetupAlertForCheck,
   deleteAlert,
+  selectPlaces,
   selectPlaceId,
   selectDeviceToken,
   selectCongestionInfo,

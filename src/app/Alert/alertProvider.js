@@ -35,6 +35,14 @@ exports.retrieveRecordAlertListByDate = async function (userIdFromJWT, date) {
   return alertListResult;
 };
 
+exports.retrievePlaceList = async function () {
+  const connection = await pool.getConnection(async (conn) => conn);
+  const placeListResult = await alertDao.selectPlaces(connection);
+  connection.release();
+
+  return placeListResult;
+};
+
 exports.retrievePlaceId = async function (placeName) {
   const connection = await pool.getConnection(async (conn) => conn);
   const placeId = await alertDao.selectPlaceId(connection, placeName);
