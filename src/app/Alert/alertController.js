@@ -44,10 +44,10 @@ exports.postAlert = async function (req, res) {
    * Body: place, time
    * JWT: userIdFromJWT
    */
-  const { userIdFromJWT, place, time } = req.body;
+  const { userIdFromJWT, placeName, time } = req.body;
   // const userIdFromJWT = req.verifiedToken.userId;
 
-  const isValidateTime = (time) => {
+  const isValidTime = (time) => {
     return /([0-2][0-9]{3})-([0-1][0-9])-([0-3][0-9]) ([0-5][0-9]):([0-5][0-9]):([0-5][0-9])(([\-\+]([0-1][0-9])\:00))?/.test(
       time
     );
@@ -68,54 +68,63 @@ exports.postAlert = async function (req, res) {
   };
 
   // 장소 빈 값 체크
-  if (!place) return res.send(errResponse(baseResponse.ALERT_PLACE_EMPTY));
+  if (!placeName) return res.send(errResponse(baseResponse.ALERT_PLACE_EMPTY));
   // 시간 빈 값 체크
   if (!time) return res.send(errResponse(baseResponse.ALERT_TIME_EMPTY));
   // 시간 형식 체크
-  if (!isValidateTime(time))
+  if (!isValidTime(time))
     return res.send(errResponse(baseResponse.ALERT_TIME_ERROR_TYPE));
-  // 시간 유효성 체크
+  // 현재 시간보다 이전의 시간으로 알림을 설정하는지 체크
   if (!isProperTime(time))
     return res.send(errResponse(baseResponse.ALERT_TIME_WRONG));
 
   // 사용자가 설정한 시간에 알림 푸시
-  const deviceToken = await alertProvider.retrieveDeviceToken(userIdFromJWT);
-  const message = {
-    notification: {
-      title: pushAlertMessage.title,
-      body: pushAlertMessage.body,
-    },
-    token: deviceToken,
-  };
-
   const datetime = new Date(time);
+
   schedule.scheduleJob(datetime, async function () {
-    const AlertParams = [userIdFromJWT, place, time];
+    const placeId = await alertProvider.retrievePlaceId(placeName);
+    const AlertParams = [userIdFromJWT, placeId, time];
     const alertRows = await alertProvider.alertCheck(AlertParams);
 
     // 알림이 삭제되지 않고 유효하다면 푸시 알림 전송
     if (alertRows[0].length) {
-      console.log(datetime, "에 설정한 푸시 알림 전송 완료!");
+      const deviceToken = await alertProvider.retrieveDeviceToken(
+        userIdFromJWT
+      );
+      const congestionInfo = await alertProvider.retrieveCongestionInfo(
+        placeName
+      );
+      const message = {
+        // 올바르게 찍히는지 확인 필요
+        notification: {
+          title:
+            "현재" +
+            placeName +
+            "의 혼잡도는" +
+            congestionInfo[0]["placeCongestLVL"] +
+            "입니다.",
+          body: congestionInfo[0]["placeCongestMSG"],
+        },
+        token: deviceToken,
+      };
+
       admin
         .messaging()
         .send(message)
         .then(function (response) {
           console.log("Successfully sent message: : ", response);
-          return res.send(response(baseResponse.SUCCESS));
         })
         .catch(function (err) {
           console.log("Error Sending message!!! : ", err);
-          return res.send(errResponse(baseResponse.PUSH_ALERT_FAIL));
         });
     } else {
-      console.log("Error Sending message!!! : ");
-      return res.send(errResponse(baseResponse.PUSH_ALERT_DELETED));
+      console.log("Alert is deleted!!!");
     }
   });
 
   const alertResponse = await alertService.createAlert(
     userIdFromJWT,
-    place,
+    placeName,
     time
   );
 

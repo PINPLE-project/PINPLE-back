@@ -35,6 +35,14 @@ exports.retrieveRecordAlertListByDate = async function (userIdFromJWT, date) {
   return alertListResult;
 };
 
+exports.retrievePlaceId = async function (placeName) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  const placeId = await alertDao.selectPlaceId(connection, placeName);
+  connection.release();
+
+  return placeId[0][0]["placeId"];
+};
+
 exports.retrieveDeviceToken = async function (userIdFromJWT) {
   const connection = await pool.getConnection(async (conn) => conn);
   const deviceToken = await alertDao.selectDeviceToken(
@@ -44,6 +52,14 @@ exports.retrieveDeviceToken = async function (userIdFromJWT) {
   connection.release();
 
   return deviceToken[0][0]["deviceToken"];
+};
+
+exports.retrieveCongestionInfo = async function (place) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  const congestionInfo = await alertDao.selectCongestionInfo(connection, place);
+  connection.release();
+
+  return congestionInfo;
 };
 
 exports.alertCheck = async function (AlertParams) {

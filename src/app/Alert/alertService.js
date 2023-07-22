@@ -5,9 +5,10 @@ const alertProvider = require("./alertProvider");
 const baseResponse = require("../../../config/responseStatus");
 const { response, errResponse } = require("../../../config/response");
 
-exports.createAlert = async function (userIdFromJWT, place, time) {
+exports.createAlert = async function (userIdFromJWT, placeName, time) {
   try {
-    const AlertParams = [userIdFromJWT, place, time];
+    const placeId = await alertProvider.retrievePlaceId(placeName);
+    AlertParams = [userIdFromJWT, placeId, time];
 
     // 알림 중복 확인
     const alertRows = await alertProvider.alertCheck(AlertParams);

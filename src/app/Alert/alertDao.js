@@ -16,7 +16,7 @@ async function selectSetupAlert(connection, userIdFromJWT) {
 // userId에 대한 알림 기록 모두 조회
 async function selectRecordAlert(connection, userIdFromJWT) {
   const selectRecordAlertListQuery = `
-                                    SELECT place, time, congestion
+                                    SELECT place, time
                                     FROM Alert
                                     WHERE userId = ? AND status = 1
                                     ORDER BY time;
@@ -31,7 +31,7 @@ async function selectRecordAlert(connection, userIdFromJWT) {
 // userId에 대해 날짜에 해당하는 알림 기록 조회
 async function selectRecordAlertByDate(connection, userIdFromJWT, date) {
   const selectRecordAlertListQuery = `
-                                    SELECT place, time, congestion
+                                    SELECT place, time
                                     FROM Alert
                                     WHERE userId = ? AND status = 1 AND DATE(time) = ?
                                     ORDER BY time;
@@ -46,7 +46,7 @@ async function selectRecordAlertByDate(connection, userIdFromJWT, date) {
 // 알림 추가
 async function insertAlert(connection, AlertParams) {
   const insertAlertQuery = `
-                            INSERT INTO Alert(userId, place, time)
+                            INSERT INTO Alert(userId, placeId, time)
                             VALUES (?, ?, ?);
                             `;
   const insertAlertRow = await connection.query(insertAlertQuery, AlertParams);
@@ -56,9 +56,9 @@ async function insertAlert(connection, AlertParams) {
 // 중복된 알림 추가를 막기 위해 조건에 해당하는 알림 조회
 async function selectSetupAlertForCheck(connection, AlertParams) {
   const selectSetupAlertForCheckListQuery = `
-                                            SELECT place, time
+                                            SELECT userId, placeId, time
                                             FROM Alert
-                                            WHERE userId = ? AND place = ? AND time = ?
+                                            WHERE userId = ? AND placeId = ? AND time = ?;
                                             `;
   const selectAlertRow = await connection.query(
     selectSetupAlertForCheckListQuery,
@@ -83,6 +83,17 @@ async function deleteAlert(connection, alertId) {
   return selectAlertRow;
 }
 
+// placeName에 해당하는 placeId 조회
+async function selectPlaceId(connection, placeName) {
+  const selectPlaceIdQuery = `
+                              SELECT placeId
+                              FROM CityData
+                              WHERE placeName = ?;
+                              `;
+  let placeId = await connection.query(selectPlaceIdQuery, placeName);
+  return placeId;
+}
+
 // 디바이스 토큰 조회
 async function selectDeviceToken(connection, userIdFromJWT) {
   const selectDeviceTokenQuery = `
@@ -94,6 +105,17 @@ async function selectDeviceToken(connection, userIdFromJWT) {
   return deviceToken;
 }
 
+// 혼잡도 정보 조회
+async function selectCongestionInfo(connection, place) {
+  const selectCongestionInfoQuery = `
+                                    SELECT placeCongestLVL, placeCongestMSG
+                                    FROM CityData
+                                    WHERE placeName = ?;
+                                    `;
+  congestionInfo = await connection.query(selectCongestionInfoQuery, place);
+  return congestionInfo;
+}
+
 module.exports = {
   selectSetupAlert,
   selectRecordAlert,
@@ -101,5 +123,7 @@ module.exports = {
   insertAlert,
   selectSetupAlertForCheck,
   deleteAlert,
+  selectPlaceId,
   selectDeviceToken,
+  selectCongestionInfo,
 };

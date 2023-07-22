@@ -6,7 +6,7 @@ module.exports = {
   DB_ERROR: { isSuccess: false, code: 4000, message: "DB 에러" },
   SERVER_ERROR: { isSuccess: false, code: 4001, message: "서버 에러" },
 
-  // 요청 오류
+  // 알림 관련 요청 오류
   ALERT_EMPTY: {
     isSuccess: false,
     code: 400,
@@ -16,6 +16,11 @@ module.exports = {
     isSuccess: false,
     code: 400,
     message: "알림을 설정할 장소를 입력해 주세요.",
+  },
+  ALERT_PLACE_NONEXISTENT: {
+    isSuccess: false,
+    code: 400,
+    message: "존재하지 않는 장소입니다.",
   },
   ALERT_TIME_EMPTY: {
     isSuccess: false,
@@ -46,15 +51,5 @@ module.exports = {
     isSuccess: false,
     code: 400,
     message: "날짜+시간 형식을 정확히 입력해 주세요.",
-  },
-  PUSH_ALERT_FAIL: {
-    isSuccess: false,
-    code: 400,
-    message: "푸시 알림을 보내는 데 실패하였습니다.",
-  },
-  PUSH_ALERT_DELETED: {
-    isSuccess: false,
-    code: 400,
-    message: "알림이 삭제되어 푸시 알림을 보낼 수 없습니다.",
   },
 };
