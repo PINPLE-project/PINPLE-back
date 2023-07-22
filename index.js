@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const port = 3000;
+const port = 80;
 
 
 // 미들웨어 설정
@@ -10,7 +10,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //CORS 정책 허용
 app.use(cors({
-    origin: 'http://localhost:3000/app/test', // 허용할 도메인 주소
+    origin: ['http://localhost:80/app/citydata', 'http://localhost:80/app/citydata/details/:category'], // 허용할 도메인 주소
     methods: ['GET'], // 허용할 HTTP 메소드
     optionsSuccessStatus: 200 // 응답 상태 코드
 }));
@@ -20,7 +20,11 @@ app.get('/', (req, res) => {
     res.send('Hello, Express!');
 });
 const userController = require('/Users/moonyaeyoon/PINPLE-back/src/app/User/userController.js');
-app.get('/app/test', userController.getUsers);
+// 모든 카테고리 데이터 출력
+app.get('/app/citydata', userController.getAllCityData);
+
+// 특정 카테고리 데이터 출력
+app.get('/app/citydata/details/:category', userController.getCityDataByCategory);
 
 
 // 서버 시작

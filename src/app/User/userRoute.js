@@ -1,6 +1,7 @@
 module.exports = function (app) {
     const user = require('./userController');
 
-    // 테스트용 API
-    app.get('/app/test', user.getUsers);
+    // 공공데이터 API
+    app.get('/app/citydata',user.getAllCityData);
+    app.get('/app/citydata/details/:category', user.getCityDataByCategory);
 }
