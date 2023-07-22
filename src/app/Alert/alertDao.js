@@ -122,6 +122,7 @@ async function updateCongestionInfo(connection, congestionInfo, AlertParams) {
                                     UPDATE Alert
                                     SET congestionLVL = ?
                                       , congestionMSG = ?
+                                      , status = 1
                                     WHERE userId = ? AND placeId = ? AND time = ?;
                                     `;
   updateCongestionInfoRow = await connection.query(updateCongestionInfoQuery, [
