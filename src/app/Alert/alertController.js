@@ -208,5 +208,10 @@ exports.getRecordAlertByDate = async function (req, res) {
     userIdFromJWT,
     date
   );
-  return res.send(response(baseResponse.SUCCESS, alertList[0]));
+
+  if (alertList[0].length) {
+    return res.send(response(baseResponse.SUCCESS, alertList[0]));
+  } else {
+    return res.send(errResponse(baseResponse.ALERT_EMPTY));
+  }
 };
