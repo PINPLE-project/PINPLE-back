@@ -14,7 +14,12 @@ const urls = {
     popular: ['POI062', 'POI063', 'POI066', 'POI068', 'POI069', 'POI070', 'POI071', 'POI072', 'POI074', 'POI078', 'POI079', 'POI084']
 };
 async function getCategoryData(category) {
-    const categoryUrls = urls[category];
+    let categoryUrls = [];
+    if (category === "all") {
+        categoryUrls = Object.values(urls).flat();
+    } else {
+        categoryUrls = urls[category] || [];
+    }
     const responsePromises = categoryUrls.map(async (code) => {
         const url = `http://openapi.seoul.go.kr:8088/72655a6f586a6a7539344e4a6f6755/xml/citydata/1/5/${code}`;
         const response = await axios.get(url);
@@ -22,16 +27,77 @@ async function getCategoryData(category) {
         const jsonData = convert.xml2json(xmlData, { compact: true, spaces: 4 });
         const users = JSON.parse(jsonData);
         const cityData = users['SeoulRtd.citydata']['CITYDATA'];
-        return {
-            AREA_NM: cityData['AREA_NM']['_text'],
-            AREA_CONGEST_LVL: cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_LVL']['_text'],
-            AREA_CONGEST_MSG: cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_MSG']['_text'],
-            AREA_DATA_TIME: cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['PPLTN_TIME']['_text']
+        // cityData가 undefined인 경우 빈 객체로 초기화
+        const extractedData = {
+            AREA_NM: '',
+            AREA_CONGEST_LVL: '',
+            AREA_CONGEST_MSG: '',
+            AREA_DATA_TIME: '',
+            FCST_PPLTN: []
         };
+
+        if (cityData) {
+            extractedData.AREA_NM = cityData['AREA_NM']['_text'];
+            extractedData.AREA_CONGEST_LVL = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_LVL']['_text'];
+            extractedData.AREA_CONGEST_MSG = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_MSG']['_text'];
+            extractedData.AREA_DATA_TIME = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['PPLTN_TIME']['_text'];
+            extractedData.FCST_PPLTN = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['FCST_PPLTN'];
+        }
+
+        return extractedData;
     });
+
     const extractedDataArray = await Promise.all(responsePromises);
     return extractedDataArray;
 }
+// 혼잡도 레벨에 따라 우선순위를 반환하는 함수
+function getCongestLevelPriority(congestLvl) {
+    switch (congestLvl) {
+        case '상당히혼잡':
+            return 3;
+        case '다소혼잡':
+            return 2;
+        case '원활':
+            return 1;
+        default:
+            return 0;
+    }
+}
+// 혼잡도에 따라 데이터를 정렬하는 함수
+async function sortDataByCongestion(dataArray, sortBy) {
+    switch (sortBy) {
+        case "congestion_high": // 혼잡도 높은 순으로 정렬
+            dataArray.sort((a, b) => {
+                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
+                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
+                return bCongestLvl - aCongestLvl;
+            });
+            break;
+        case "congestion_low": // 혼잡도 낮은 순으로 정렬
+            dataArray.sort((a, b) => {
+                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
+                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
+                return aCongestLvl - bCongestLvl;
+            });
+            break;
+        case "area_name": // 지역명 가나다 순으로 정렬
+            dataArray.sort((a, b) => {
+                return a.AREA_NM.localeCompare(b.AREA_NM);
+            });
+            break;
+        default:
+            // 기본은 혼잡도 높은 순으로 정렬
+            dataArray.sort((a, b) => {
+                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
+                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
+                return bCongestLvl - aCongestLvl;
+            });
+    }
+    return dataArray;
+}
+
+
+
 /**
  * API No. 1
  * Name: 장소 혼잡도 API (전체)
@@ -83,17 +149,53 @@ exports.getAllCityData = async function (req, res) {
  * Name: 상세보기_추천장소 API
  * [GET] /app/citydata/details/:category
  */
+
 exports.getCityDataByCategory = async function (req, res) {
     try {
         const category = req.params.category;
         const categoryData = await getCategoryData(category);
 
-        console.log(`Category Data for ${category}:`, categoryData); // 콘솔에 출력
+        // Shuffle the categoryData array to get a random order of locations
+        shuffleArray(categoryData);
 
-        return res.send(response(responseStatus.SUCCESS, categoryData));
+        // Get the first 3 locations from the shuffled array
+        const randomLocations = categoryData.slice(0, 3);
+
+        console.log(`Category Data for ${category}:`, randomLocations); // Log the randomly selected locations
+
+        return res.send(response(responseStatus.SUCCESS, randomLocations));
     } catch (error) {
         console.error("Error:", error);
         return res.send(errResponse(responseStatus.SERVER_ERROR));
     }
 };
 
+// Function to shuffle an array randomly
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+
+/**
+ * API No. 5
+ * Name: 장소 목록 API (혼잡도 높은순, 혼잡도 낮은순, 가나다순)
+ * [GET] /app/citydata/list?sortby={}
+ */
+
+exports.getCityDataSorted = async function (req, res) {
+    try {
+        const sortBy = req.query.sortby;
+        const categoryData = await getCategoryData("all"); // 모든 카테고리의 데이터를 가져옵니다.
+        const sortedData = await sortDataByCongestion(categoryData, sortBy); // 혼잡도에 따라 데이터를 정렬합니다.
+
+        console.log(`Sorted Data (Sort By: ${sortBy}):`, sortedData); // 콘솔에 정렬된 데이터 출력
+
+        return res.send(response(responseStatus.SUCCESS, sortedData));
+    } catch (error) {
+        console.error("Error:", error);
+        return res.send(errResponse(responseStatus.SERVER_ERROR));
+    }
+};

@@ -4,4 +4,5 @@ module.exports = function (app) {
     // 공공데이터 API
     app.get('/app/citydata',user.getAllCityData);
     app.get('/app/citydata/details/:category', user.getCityDataByCategory);
+    app.get('/app/citydata/list', user.getCityDataSorted);
 }
