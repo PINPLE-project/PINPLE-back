@@ -6,10 +6,8 @@ const { response, errResponse } = require("../../../config/response");
 
 exports.createReport = async function (pinviewId, userIdFromJWT, reason) {
   try {
-    reportParams = [pinviewId, userIdFromJWT, ...reason];
-    console.log(reportParams);
-
     const connection = await pool.getConnection(async (conn) => conn);
+    const reportParams = [pinviewId, userIdFromJWT, ...reason];
     const createReportResult = await reportDao.insertReport(
       connection,
       reportParams
