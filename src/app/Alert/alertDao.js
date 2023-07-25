@@ -3,7 +3,7 @@ async function selectSetupAlert(connection, userIdFromJWT) {
   const selectSetupAlertListQuery = `
                                     SELECT placeId, time
                                     FROM Alert
-                                    WHERE (userId = ? AND status = 0)
+                                    WHERE userId = ? AND status = 0
                                     ORDER BY time;
                                     `;
   const selectAlertRow = await connection.query(

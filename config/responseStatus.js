@@ -12,6 +12,16 @@ module.exports = {
     code: 400,
     message: "존재하지 않는 알림입니다.",
   },
+  ALERT_RECORD_EMPTY: {
+    isSuccess: false,
+    code: 400,
+    message: "알림 기록이 존재하지 않습니다.",
+  },
+  ALERT_SETUP_EMPTY: {
+    isSuccess: false,
+    code: 400,
+    message: "설정된 알림이 존재하지 않습니다.",
+  },
   ALERT_PLACE_EMPTY: {
     isSuccess: false,
     code: 400,
