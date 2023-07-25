@@ -12,4 +12,9 @@ module.exports = {
     code: 400,
     message: "신고 사유가 선택되지 않았습니다.",
   },
+  REPORT_REDUNDANT: {
+    isSuccess: false,
+    code: 400,
+    message: "이미 신고한 핀리뷰입니다.",
+  },
 };
