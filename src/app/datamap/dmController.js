@@ -3,7 +3,7 @@ const responseStatus = require("/Users/moonyaeyoon/PINPLE-back/config/responseSt
 const { response, errResponse } = require("../../../config/response");
 const axios = require('axios');
 const convert = require('xml-js');
-const userProvider = require("./userProvider");
+const dmProvider = require("./dmProvider");
 const { pool } = require("/Users/moonyaeyoon/PINPLE-back/config/database")
 
 const urls = {

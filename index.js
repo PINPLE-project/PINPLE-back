@@ -19,18 +19,18 @@ app.use(cors({
 app.get('/', (req, res) => {
     res.send('Hello, Express!');
 });
-const userController = require('/Users/moonyaeyoon/PINPLE-back/src/app/User/userController.js');
+const dmController = require('/Users/moonyaeyoon/PINPLE-back/src/app/datamap/dmController.js');
 // 모든 카테고리 데이터 출력
-app.get('/app/citydata', userController.getAllCityData);
+app.get('/app/citydata', dmController.getAllCityData);
 
 // 특정 카테고리 데이터 출력
-app.get('/app/citydata/details/:category', userController.getCityDataByCategory);
+app.get('/app/citydata/details/:category', dmController.getCityDataByCategory);
 
 // 혼잡도 전망 데이터 출력
-app.get('/app/citydata/details/fcst', userController.getCityDataForecast);
+app.get('/app/citydata/details/fcst', dmController.getCityDataForecast);
 
 // 장소 리스트 출력
-app.get('/app/citydata/list', userController.getCityDataSorted);
+app.get('/app/citydata/list', dmController.getCityDataSorted);
 
 // 서버 시작
 app.listen(port, () => {
