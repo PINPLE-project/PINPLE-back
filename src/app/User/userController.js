@@ -26,6 +26,7 @@ async function getCategoryData(category) {
         const xmlData = response.data;
         const jsonData = convert.xml2json(xmlData, { compact: true, spaces: 4 });
         const users = JSON.parse(jsonData);
+        // cityData가 undefined인 경우 빈 객체로 초기화
         const cityData = users['SeoulRtd.citydata']['CITYDATA'];
         // cityData가 undefined인 경우 빈 객체로 초기화
         const extractedData = {
@@ -33,7 +34,7 @@ async function getCategoryData(category) {
             AREA_CONGEST_LVL: '',
             AREA_CONGEST_MSG: '',
             AREA_DATA_TIME: '',
-            FCST_PPLTN: []
+            FCST_PPLTN: [],
         };
 
         if (cityData) {
@@ -47,56 +48,14 @@ async function getCategoryData(category) {
         return extractedData;
     });
 
+
     const extractedDataArray = await Promise.all(responsePromises);
     return extractedDataArray;
-}
-// 혼잡도 레벨에 따라 우선순위를 반환하는 함수
-function getCongestLevelPriority(congestLvl) {
-    switch (congestLvl) {
-        case '상당히혼잡':
-            return 3;
-        case '다소혼잡':
-            return 2;
-        case '원활':
-            return 1;
-        default:
-            return 0;
-    }
-}
-// 혼잡도에 따라 데이터를 정렬하는 함수
-async function sortDataByCongestion(dataArray, sortBy) {
-    switch (sortBy) {
-        case "congestion_high": // 혼잡도 높은 순으로 정렬
-            dataArray.sort((a, b) => {
-                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
-                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
-                return bCongestLvl - aCongestLvl;
-            });
-            break;
-        case "congestion_low": // 혼잡도 낮은 순으로 정렬
-            dataArray.sort((a, b) => {
-                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
-                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
-                return aCongestLvl - bCongestLvl;
-            });
-            break;
-        case "area_name": // 지역명 가나다 순으로 정렬
-            dataArray.sort((a, b) => {
-                return a.AREA_NM.localeCompare(b.AREA_NM);
-            });
-            break;
-        default:
-            // 기본은 혼잡도 높은 순으로 정렬
-            dataArray.sort((a, b) => {
-                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
-                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
-                return bCongestLvl - aCongestLvl;
-            });
-    }
-    return dataArray;
-}
 
 
+
+
+}
 
 /**
  * API No. 1
@@ -125,18 +84,40 @@ exports.getAllCityData = async function (req, res) {
 /**
  * API No. 2
  * Name: 상세보기_혼잡도전망 API 
- * [GET] /app/citydata/details/fccst
+ * [GET] /app/citydata/details/fcst
  */
-//(cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['FCST_PPLTN']) {
-//    const fcstData = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['FCST_PPLTN'];
-//    extractedData['FCST_PPLTN'] = fcstData.map((data) => {
-//        return {
-//            FCST_TIME: data['FCST_TIME']['_text'],
-//            FCST_CONGEST_LVL: data['FCST_CONGEST_LVL']['_text'],
-//            FCST_PPLTN_MIN: parseInt(data['FCST_PPLTN_MIN']['_text']),
-//            FCST_PPLTN_MAX: parseInt(data['FCST_PPLTN_MAX']['_text'])
-//        };
-//    });
+// Assuming you already have the XML data in a variable named `jsonData`
+
+exports.getCityDataForecast = async function (req, res) {
+    try {
+        const category = req.params.category; // Assuming the category is passed as a parameter, adjust this line if needed
+        const categoryData = await getCategoryData(category);
+
+        // Assuming you want to get the forecast data for the first location in the categoryData array
+        const firstLocationForecast = categoryData[0];
+
+        // Extract the forecast data
+        const forecastData = {
+            AREA_NM: firstLocationForecast.AREA_NM,
+            FCST_TIME: [],
+            FCST_CONGEST_LVL: []
+        };
+
+        for (const forecast of firstLocationForecast.FCST_PPLTN) {
+            forecastData.FCST_TIME.push(forecast.FCST_TIME);
+            forecastData.FCST_CONGEST_LVL.push(forecast.FCST_CONGEST_LVL);
+        }
+
+        console.log(`Forecast Data for ${category} - ${forecastData.AREA_NM}:`, forecastData); // Log the forecast data
+
+        return res.send(response(responseStatus.SUCCESS, forecastData));
+    } catch (error) {
+        console.error("Error:", error);
+        return res.send(errResponse(responseStatus.SERVER_ERROR));
+    }
+};
+
+
 
 /**
  * API No. 3
@@ -185,6 +166,51 @@ function shuffleArray(array) {
  * [GET] /app/citydata/list?sortby={}
  */
 
+// 혼잡도 레벨에 따라 우선순위를 반환하는 함수
+function getCongestLevelPriority(congestLvl) {
+    switch (congestLvl) {
+        case '상당히혼잡':
+            return 3;
+        case '다소혼잡':
+            return 2;
+        case '원활':
+            return 1;
+        default:
+            return 0;
+    }
+}
+// 혼잡도에 따라 데이터를 정렬하는 함수
+async function sortDataByCongestion(dataArray, sortBy) {
+    switch (sortBy) {
+        case "congestion_high": // 혼잡도 높은 순으로 정렬
+            dataArray.sort((a, b) => {
+                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
+                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
+                return bCongestLvl - aCongestLvl;
+            });
+            break;
+        case "congestion_low": // 혼잡도 낮은 순으로 정렬
+            dataArray.sort((a, b) => {
+                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
+                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
+                return aCongestLvl - bCongestLvl;
+            });
+            break;
+        case "area_name": // 지역명 가나다 순으로 정렬
+            dataArray.sort((a, b) => {
+                return a.AREA_NM.localeCompare(b.AREA_NM);
+            });
+            break;
+        default:
+            // 기본은 혼잡도 높은 순으로 정렬
+            dataArray.sort((a, b) => {
+                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
+                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
+                return bCongestLvl - aCongestLvl;
+            });
+    }
+    return dataArray;
+}
 exports.getCityDataSorted = async function (req, res) {
     try {
         const sortBy = req.query.sortby;
