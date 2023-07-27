@@ -3,6 +3,7 @@ const responseStatus = require("/Users/moonyaeyoon/PINPLE-back/config/responseSt
 const { response, errResponse } = require("../../../config/response");
 const axios = require('axios');
 const convert = require('xml-js');
+const dmDao = require("./dmDao");
 const dmProvider = require("./dmProvider");
 const { pool } = require("/Users/moonyaeyoon/PINPLE-back/config/database")
 
@@ -13,49 +14,6 @@ const urls = {
     station: ['POI013', 'POI014', 'POI015', 'POI016', 'POI017', 'POI018', 'POI033', 'POI034', 'POI038', 'POI039', 'POI040', 'POI042', 'POI043', 'POI045', 'POI046'],
     popular: ['POI062', 'POI063', 'POI066', 'POI068', 'POI069', 'POI070', 'POI071', 'POI072', 'POI074', 'POI078', 'POI079', 'POI084']
 };
-async function getCategoryData(category) {
-    let categoryUrls = [];
-    if (category === "all") {
-        categoryUrls = Object.values(urls).flat();
-    } else {
-        categoryUrls = urls[category] || [];
-    }
-    const responsePromises = categoryUrls.map(async (code) => {
-        const url = `http://openapi.seoul.go.kr:8088/72655a6f586a6a7539344e4a6f6755/xml/citydata/1/5/${code}`;
-        const response = await axios.get(url);
-        const xmlData = response.data;
-        const jsonData = convert.xml2json(xmlData, { compact: true, spaces: 4 });
-        const users = JSON.parse(jsonData);
-        // cityData가 undefined인 경우 빈 객체로 초기화
-        const cityData = users['SeoulRtd.citydata']['CITYDATA'];
-        // cityData가 undefined인 경우 빈 객체로 초기화
-        const extractedData = {
-            AREA_NM: '',
-            AREA_CONGEST_LVL: '',
-            AREA_CONGEST_MSG: '',
-            AREA_DATA_TIME: '',
-            FCST_PPLTN: [],
-        };
-
-        if (cityData) {
-            extractedData.AREA_NM = cityData['AREA_NM']['_text'];
-            extractedData.AREA_CONGEST_LVL = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_LVL']['_text'];
-            extractedData.AREA_CONGEST_MSG = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_MSG']['_text'];
-            extractedData.AREA_DATA_TIME = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['PPLTN_TIME']['_text'];
-            extractedData.FCST_PPLTN = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['FCST_PPLTN'];
-        }
-
-        return extractedData;
-    });
-
-
-    const extractedDataArray = await Promise.all(responsePromises);
-    return extractedDataArray;
-
-
-
-
-}
 
 /**
  * API No. 1
@@ -67,7 +25,7 @@ exports.getAllCityData = async function (req, res) {
     try {
         const allCategoryData = {};
         const categoryPromises = Object.keys(urls).map(async (category) => {
-            const categoryData = await getCategoryData(category);
+            const categoryData = await userDao.getCategoryData(category);
             allCategoryData[category] = categoryData;
         });
 
