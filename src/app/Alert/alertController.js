@@ -44,7 +44,7 @@ exports.getSetupAlert = async function (req, res) {
 
 exports.postAlert = async function (req, res) {
   /**
-   * Body: place, time
+   * Body: placeName, time
    * JWT: userIdFromJWT
    */
   const { userIdFromJWT, placeName, time } = req.body;
@@ -93,15 +93,14 @@ exports.postAlert = async function (req, res) {
   if (!isProperTime(time))
     return res.send(errResponse(baseResponse.ALERT_TIME_WRONG));
 
-  // 사용자가 설정한 시간에 알림 푸시
   const datetime = new Date(time);
-
+  // 사용자가 설정한 시간에 알림 푸시
   schedule.scheduleJob(datetime, async function () {
     const placeId = await alertProvider.retrievePlaceId(placeName);
     const AlertParams = [userIdFromJWT, placeId, time];
-    const alertRows = await alertProvider.alertCheck(AlertParams);
 
     // 알림이 유효하다면 푸시 알림 전송
+    const alertRows = await alertProvider.alertCheck(AlertParams);
     if (alertRows[0].length) {
       const deviceToken = await alertProvider.retrieveDeviceToken(
         userIdFromJWT
@@ -229,7 +228,7 @@ exports.getRecordAlertByDate = async function (req, res) {
     userIdFromJWT,
     date
   );
-  // 해당 날짜에 대한 알림이 없는 경우
+  // 해당 날짜에 대한 알림 기록이 없는 경우
   if (!alertList[0].length) {
     return res.send(errResponse(baseResponse.ALERT_EMPTY));
   }
