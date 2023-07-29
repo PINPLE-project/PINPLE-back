@@ -7,6 +7,7 @@ const qs = require('qs');
 const session = require('express-session');
 const { pool } = require("../../../config/database");
 const userService = require('./userService');
+const userProvider = require('./userProvider');
 const userDao = require("./userDao");
 //const nunjucks = require('nunjucks');
 
@@ -31,6 +32,12 @@ exports.test = async function(req,res){
     return res.send(response(baseResponse.SUCCESS));
 }
 
+
+/**
+ * API No. 1
+ * Name: 구글 로그인 API → 구글 회원가입 API와 합쳐짐
+ * [GET] /google/login
+ */
 exports.googleLogin = function(req, res) {
     let url = 'https://accounts.google.com/o/oauth2/v2/auth';
     url += `?client_id=${GOOGLE_CLIENT_ID}`;
@@ -41,9 +48,15 @@ exports.googleLogin = function(req, res) {
     return res.redirect(url);
 }
 
+
+/**
+ * API No. 2
+ * Name: 구글 로그인 리다이렉트 API 
+ * [GET] /google/login/redirect
+ */
 exports.googleLoginRe = async function (req, res){
     const { code } = req.query;
-    console.log(`code: ${code}`);
+    // console.log(`code: ${code}`);
 
     const resp = await axios.post(GOOGLE_TOKEN_URL, {
         code,
@@ -59,13 +72,18 @@ exports.googleLoginRe = async function (req, res){
         },
     });
     const email = resp2.data.email;
-    console.log(email);
+    // console.log(email);
 
     const signInResponse = await userService.postSignIn(email);
-
+    // console.log(signInResponse);
     res.send(signInResponse);
 }
 
+/**
+ * API No. 3
+ * Name: 구글 회원가입 + 로그인 API
+ * [GET] /google/signup
+ */
 exports.googleSignup= function (req, res) {
     // 회원가입 하기 전에 유효성 검사 추가하기
     let url = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -77,9 +95,14 @@ exports.googleSignup= function (req, res) {
     return res.redirect(url);
 }
 
+/**
+ * API No. 4
+ * Name: 구글 회원가입 + 로그인 리다이렉트 API
+ * [GET] /google/signup/redirect
+ */
 exports.googleSignupRe = async function (req, res) {
     const { code } = req.query;
-    console.log(`code: ${code}`);
+    // console.log(`code: ${code}`);
 
     const resp = await axios.post(GOOGLE_TOKEN_URL, {
         code,
@@ -97,32 +120,39 @@ exports.googleSignupRe = async function (req, res) {
     const email = resp2.data.email;
     const nickname = resp2.data.name;
     console.log(email, nickname)
-    
-    try{
-        // writer_id는 추후에 삭제 필요
-        const insertUserParams = [email, nickname];
-        const connection = await pool.getConnection(async (conn) => conn);
 
-        const createUserResult = await userDao.insertUser(connection, insertUserParams);
-        console.log(`삽입된 유저 : ${createUserResult[0]}`)
-        connection.release();
-        //return response(baseResponse.SUCCESS);
-        
+    const idRows = await userProvider.idCheck(email); // 아이디 존재 여부 확인
+    if (idRows.length < 1){ // 계정 생성된 것 없음
+        const signUpResponse = await userService.postSignUp(email, nickname); // db에 삽입
+        // console.log(signUpResponse);
+    } 
 
-    } catch(err){
-        console.log('error')
+    let url = 'https://accounts.google.com/o/oauth2/v2/auth'; // 로그인
+    url += `?client_id=${GOOGLE_CLIENT_ID}`;
+    url += `&redirect_uri=${GOOGLE_LOGIN_REDIRECT_URI}`;
+    url += '&response_type=code';
+    url += '&scope=email profile';
 
-    }
-
-    return res.json(resp2.data);
+    return res.redirect(url);
+    // return res.json(resp2.data);
 }
 
+/**
+ * API No. 5
+ * Name: 카카오 회원가입 + 로그인 API
+ * [GET] /auth/kakao
+ */
 exports.kakaoLogin = function (req,res) {
     const kakaoAuthURL = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URI}&response_type=code`;
     
     return res.redirect(kakaoAuthURL);
 }
 
+/**
+ * API No. 6
+ * Name: 카카오 회원가입 + 로그인 리다이렉트 API
+ * [GET] /auth/kakao/callback
+ */
 exports.kakaoLoginRe = async function(req,res) {
     try{ //access토큰을 받기 위한 코드
         token = await axios({//token
@@ -146,7 +176,7 @@ exports.kakaoLoginRe = async function(req,res) {
     //access토큰을 받아서 사용자 정보를 알기 위해 쓰는 코드
     let user;
     try{
-        console.log(token); //access정보를 가지고 또 요청해야 정보를 가져올 수 있음.
+        // console.log(token); //access정보를 가지고 또 요청해야 정보를 가져올 수 있음.
         user = await axios({
             method:'get',
             url:'https://kapi.kakao.com/v2/user/me',
@@ -157,7 +187,19 @@ exports.kakaoLoginRe = async function(req,res) {
     } catch(e){
         res.json(err);
     }
-    console.log(user.data.properties);
-    
-    res.send(user.data.properties.nickname);
+
+    const email = user.data.kakao_account.email; // 이메일(userId)
+    const nickname = user.data.properties.nickname; // 닉네임
+
+    const idRows = await userProvider.idCheck(email); // 아이디 존재 여부 확인
+    if (idRows.length < 1){ // 계정 생성된 것 없음
+        const signUpResponse = await userService.postSignUp(email, nickname); // db에 삽입
+        // console.log(signUpResponse);
+    } 
+
+    const signInResponse = await userService.postSignIn(email, nickname); // 로그인: JWT 발급
+    res.send(signInResponse);
+
+    //console.log(user.data.kakao_account);
+    //res.send({'email': email, 'nickname': nickname});
 }

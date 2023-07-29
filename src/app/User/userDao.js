@@ -10,6 +10,16 @@
     return idRows;
 }
 
+async function insertUser(connection, id, nickname){
+  const insertQuestionQuery = `
+          INSERT INTO user(userId, nickname, socialType) VALUES('${id}', '${nickname}', IF('${id}' LIKE '%@gmail.com', 2, 1));
+  `;
+
+  const insertQuestionRows = await connection.query(insertQuestionQuery);
+  return insertQuestionRows;
+}
+
 module.exports = {
-    selectUserId
+    selectUserId,
+    insertUser,
 };

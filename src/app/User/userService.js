@@ -7,23 +7,8 @@ const jwtMiddleware = require("../../../config/jwtMiddleware");
 const jwt = require("jsonwebtoken");
 const secret_config = require("../../../config/secret");
 
-exports.postSignIn = async function(id) {
+exports.postSignIn = async function(id, nickname) {
     try {
-        // 아이디 존재 확인
-        const idRows = await userProvider.idCheck(id);
-        if (idRows.length < 1)
-            return errResponse(baseResponse.SIGNIN_ID_WRONG);
-
-        // 계정 상태 확인
-        // const userInfoRows = await userProvider.accountCheck(id);
-
-        // // 0: 탈퇴, 1: 활성
-        // if (userInfoRows[0].status === 0) {
-        //     return errResponse(baseResponse.SIGNIN_INACTIVE_ACCOUNT);
-        // } 
-
-        // console.log(userInfoRows[0].userId)
-
         // 토큰 생성
         let token = await jwt.sign(
             {
@@ -43,4 +28,13 @@ exports.postSignIn = async function(id) {
         console.log(`App - postSignIn Service error\n: ${err.message} \n${JSON.stringify(err)}`);
         return errResponse(baseResponse.DB_ERROR);
     }
+}
+
+exports.postSignUp = async function(id, nickname) {
+    const insertUserParams = [id, nickname];
+    const connection = await pool.getConnection(async (conn) => conn);
+
+    const createUserResult = await userDao.insertUser(connection, id, nickname);
+    console.log(`삽입된 유저 : ${createUserResult[0]}`)
+    connection.release();
 }

@@ -18,10 +18,10 @@ module.exports = function(app) {
 
     // 구글 로그인 API
     // 로그인할 때 jwt 발급
-    app.get('/google/login', user.googleLogin);
+    app.get('/google/login', user.googleLogin); // 사용 안해도 자동으로 회원가입 기능에서 로그인까지 작동
     app.get('/google/login/redirect', user.googleLoginRe);
 
-    // 구글 회원가입 API
+    // 구글 로그인 및 회원가입 API
     app.get('/google/signup', user.googleSignup);
     app.get('/google/signup/redirect', user.googleSignupRe);
 
