@@ -1,9 +1,10 @@
 const { pool } = require("../../../config/database");
 const dmDao = require("./dmDao");
 
+//추천장소 (랜덤3개)를 반환하는 함수
 async function getRandomLocationsByCategory(category, count) {
     try {
-        const categoryData = await dmDao.selectrecommendation(category);
+        const categoryData = await dmDao.selectRecommendation(category);
         const randomLocations = shuffleArray(categoryData).slice(0, count);
         return randomLocations;
     } catch (error) {
