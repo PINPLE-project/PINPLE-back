@@ -125,7 +125,7 @@ exports.postAlert = async function (req, res) {
         };
 
         // Alert 테이블에 혼잡도 정보 반영
-        await alertService.editAlert(congestionInfo, AlertParams);
+        await alertService.updateAlert(congestionInfo, AlertParams);
 
         // 푸시 알림 전송
         admin

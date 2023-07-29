@@ -48,7 +48,7 @@ exports.deleteAlert = async function (alertId) {
   }
 };
 
-exports.editAlert = async function (congestionInfo, AlertParams) {
+exports.updateAlert = async function (congestionInfo, AlertParams) {
   try {
     const connection = await pool.getConnection(async (conn) => conn);
     const updateAlertResult = await alertDao.updateCongestionInfo(
