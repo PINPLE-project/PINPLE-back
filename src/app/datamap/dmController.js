@@ -6,6 +6,7 @@ const convert = require('xml-js');
 const dmProvider = require("./dmProvider");
 const dmDao = require("./dmDao");
 const { pool } = require("/Users/moonyaeyoon/PINPLE-back/config/database")
+
 const urls = {
     park: ['POI089', 'POI091', 'POI092', 'POI093', 'POI094', 'POI095', 'POI096', 'POI099', 'POI100', 'POI106', 'POI108', 'POI109', 'POI110'],
     tourist: ['POI001', 'POI002', 'POI003', 'POI004', 'POI005', 'POI006', 'POI007'],
@@ -62,8 +63,8 @@ async function getCategoryData(category) {
 exports.getAllCityData = async function (req, res) {
     try {
         const allCategoryData = {};
-        const categoryPromises = Object.keys(dmDao.urls).map(async (category) => {
-            const categoryData = await dmDao.getCategoryData(category);
+        const categoryPromises = Object.keys(urls).map(async (category) => {
+            const categoryData = await getCategoryData(category);
             allCategoryData[category] = categoryData;
         });
 
@@ -77,6 +78,7 @@ exports.getAllCityData = async function (req, res) {
         return res.send(errResponse(responseStatus.SERVER_ERROR));
     }
 };
+
 /**
  * API No. 2
  * Name: 상세보기_혼잡도전망 API
@@ -101,15 +103,9 @@ exports.getAllCityData = async function (req, res) {
 exports.getCityDataByCategory = async function (req, res) {
     try {
         const category = req.params.category;
-        const categoryData = await getCategoryData(category);
+        const randomLocations = await dmProvider.getRandomLocationsByCategory(category, 3);
 
-        // Shuffle the categoryData array to get a random order of locations
-        shuffleArray(categoryData);
-
-        // Get the first 3 locations from the shuffled array
-        const randomLocations = categoryData.slice(0, 3);
-
-        console.log(`Category Data for ${category}:`, randomLocations); // Log the randomly selected locations
+        console.log(`Category Data for ${category}:`, randomLocations);
 
         return res.send(response(responseStatus.SUCCESS, randomLocations));
     } catch (error) {
@@ -118,14 +114,6 @@ exports.getCityDataByCategory = async function (req, res) {
     }
 };
 
-// Function to shuffle an array randomly
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-}
-
 
 /**
  * API No. 5
@@ -133,56 +121,11 @@ function shuffleArray(array) {
  * [GET] /app/citydata/list?sortby={}
  */
 
-// 혼잡도 레벨에 따라 우선순위를 반환하는 함수
-function getCongestLevelPriority(congestLvl) {
-    switch (congestLvl) {
-        case '상당히혼잡':
-            return 3;
-        case '다소혼잡':
-            return 2;
-        case '원활':
-            return 1;
-        default:
-            return 0;
-    }
-}
-// 혼잡도에 따라 데이터를 정렬하는 함수
-async function sortDataByCongestion(dataArray, sortBy) {
-    switch (sortBy) {
-        case "congestion_high": // 혼잡도 높은 순으로 정렬
-            dataArray.sort((a, b) => {
-                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
-                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
-                return bCongestLvl - aCongestLvl;
-            });
-            break;
-        case "congestion_low": // 혼잡도 낮은 순으로 정렬
-            dataArray.sort((a, b) => {
-                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
-                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
-                return aCongestLvl - bCongestLvl;
-            });
-            break;
-        case "area_name": // 지역명 가나다 순으로 정렬
-            dataArray.sort((a, b) => {
-                return a.AREA_NM.localeCompare(b.AREA_NM);
-            });
-            break;
-        default:
-            // 기본은 혼잡도 높은 순으로 정렬
-            dataArray.sort((a, b) => {
-                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
-                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
-                return bCongestLvl - aCongestLvl;
-            });
-    }
-    return dataArray;
-}
 exports.getCityDataSorted = async function (req, res) {
     try {
         const sortBy = req.query.sortby;
-        const categoryData = await getCategoryData("all"); // 모든 카테고리의 데이터를 가져옵니다.
-        const sortedData = await sortDataByCongestion(categoryData, sortBy); // 혼잡도에 따라 데이터를 정렬합니다.
+        const cityData = await dmDao.selectCityData();
+        const sortedData = await dmProvider.sortDataByCongestion(cityData, sortBy);
 
         console.log(`Sorted Data (Sort By: ${sortBy}):`, sortedData); // 콘솔에 정렬된 데이터 출력
 
