@@ -1,11 +1,10 @@
-
-const responseStatus = require("/Users/moonyaeyoon/PINPLE-back/config/responseStatus.js");
-const { response, errResponse } = require("../../../config/response");
+const responseStatus = require("../../config/responseStatus");
+const { response, errResponse } = require("../../config/response");
 const axios = require('axios');
 const convert = require('xml-js');
 const dmProvider = require("./dmProvider");
 const dmDao = require("./dmDao");
-const { pool } = require("/Users/moonyaeyoon/PINPLE-back/config/database")
+const { pool } = require("../../config/database");
 
 const urls = {
     park: ['POI089', 'POI091', 'POI092', 'POI093', 'POI094', 'POI095', 'POI096', 'POI099', 'POI100', 'POI106', 'POI108', 'POI109', 'POI110'],
@@ -71,7 +70,12 @@ exports.getAllCityData = async function (req, res) {
         await Promise.all(categoryPromises);
 
         console.log("Category FcstData:", allCategoryData); // 콘솔에 출력
-
+        
+        //citydata 테이블에 도시정보 업데이트
+        Object.keys(urls).map(async (category) => {
+            const categoryData = await allCategoryData[category];
+            dmDao.insertCityData(categoryData);
+        })
         return res.send(response(responseStatus.SUCCESS, allCategoryData));
     } catch (error) {
         console.error("Error:", error);

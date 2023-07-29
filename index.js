@@ -19,7 +19,7 @@ app.use(cors({
 app.get('/', (req, res) => {
     res.send('Hello, Express!');
 });
-const dmController = require('/Users/moonyaeyoon/PINPLE-back/src/app/datamap/dmController.js');
+const dmController = require("./dmController");
 // 모든 카테고리 데이터 출력
 app.get('/app/citydata', dmController.getAllCityData);
 
