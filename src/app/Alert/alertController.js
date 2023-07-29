@@ -4,7 +4,7 @@ const { response, errResponse } = require("../../../config/response");
 const admin = require("../../../config/pushConnect");
 const alertService = require("../../app/Alert/alertService");
 const alertProvider = require("../../app/Alert/alertProvider");
-const dmController = require("../datamap/dmController");
+// const dmController = require("../datamap/dmController");
 
 /**
  * API No. 0
@@ -100,11 +100,11 @@ exports.postAlert = async function (req, res) {
     const placeId = await alertProvider.retrievePlaceId(placeName);
     const AlertParams = [userIdFromJWT, placeId, time];
 
-    // 알림이 유효하다면 푸시 알림 전송
+    // 알림이 유효한지 확인
     const alertRows = await alertProvider.alertCheck(AlertParams);
     if (alertRows[0].length) {
       // 실시간 공공도시데이터 가져와서 CityData 테이블에 업데이트
-      dmController.getAllCityData();
+      // dmController.getAllCityData();
 
       const deviceToken = await alertProvider.retrieveDeviceToken(
         userIdFromJWT
@@ -113,31 +113,40 @@ exports.postAlert = async function (req, res) {
         placeName
       );
 
-      const message = {
-        notification: {
-          title:
-            "현재" +
-            placeName +
-            "의 혼잡도는" +
-            congestionInfo[0][0]["placeCongestLVL"] +
-            "입니다.",
-          body: congestionInfo[0][0]["placeCongestMSG"],
-        },
-        token: deviceToken,
-      };
+      // 혼잡도 정보가 비어있지 않은지 확인
+      if (
+        congestionInfo[0][0]["placeCongestLVL"] != "" &&
+        congestionInfo[0][0]["placeCongestMSG"] != ""
+      ) {
+        const message = {
+          notification: {
+            title:
+              "현재" +
+              placeName +
+              "의 혼잡도는" +
+              congestionInfo[0][0]["placeCongestLVL"] +
+              "입니다.",
+            body: congestionInfo[0][0]["placeCongestMSG"],
+          },
+          token: deviceToken,
+        };
 
-      // Alert 테이블에 혼잡도 정보 반영
-      await alertService.editAlert(congestionInfo, AlertParams);
+        // Alert 테이블에 혼잡도 정보 반영
+        await alertService.editAlert(congestionInfo, AlertParams);
 
-      admin
-        .messaging()
-        .send(message)
-        .then(function (response) {
-          console.log("Successfully sent message: : ", response);
-        })
-        .catch(function (err) {
-          console.log("Error Sending message!!! : ", err);
-        });
+        // 푸시 알림 전송
+        admin
+          .messaging()
+          .send(message)
+          .then(function (response) {
+            console.log("Successfully sent message: : ", response);
+          })
+          .catch(function (err) {
+            console.log("Error Sending message!!! : ", err);
+          });
+      } else {
+        console.log("DB에 혼잡도 정보가 존재하지 않습니다.");
+      }
     } else {
       console.log("Alert is deleted!!!");
     }
