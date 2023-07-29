@@ -118,7 +118,7 @@ async function selectDeviceToken(connection, userIdFromJWT) {
 }
 
 // 혼잡도 정보 조회
-async function selectCongestionInfo(connection, place) {
+async function selectCongestionInfo(connection, placeName) {
   const selectCongestionInfoQuery = `
                                     SELECT placeCongestLVL, placeCongestMSG
                                     FROM CityData
@@ -126,7 +126,7 @@ async function selectCongestionInfo(connection, place) {
                                     `;
   const congestionInfo = await connection.query(
     selectCongestionInfoQuery,
-    place
+    placeName
   );
   return congestionInfo;
 }

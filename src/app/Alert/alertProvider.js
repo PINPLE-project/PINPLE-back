@@ -62,9 +62,12 @@ exports.retrieveDeviceToken = async function (userIdFromJWT) {
   return deviceToken[0][0]["deviceToken"];
 };
 
-exports.retrieveCongestionInfo = async function (place) {
+exports.retrieveCongestionInfo = async function (placeName) {
   const connection = await pool.getConnection(async (conn) => conn);
-  const congestionInfo = await alertDao.selectCongestionInfo(connection, place);
+  const congestionInfo = await alertDao.selectCongestionInfo(
+    connection,
+    placeName
+  );
   connection.release();
 
   return congestionInfo;
