@@ -10,7 +10,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //CORS 정책 허용
 app.use(cors({
-    origin: ['http://localhost:80/app/citydata', 'http://localhost:80/app/citydata/details/:category', 'http://localhost:80/app/citydata/list'], // 허용할 도메인 주소
+    origin: ['http://localhost:80/app/citydata', 'http://localhost:80/app/citydata/details/:category', 'http://localhost:80/app/citydata/details/fcst', 'http://localhost:80/app/citydata/list'], // 허용할 도메인 주소
     methods: ['GET'], // 허용할 HTTP 메소드
     optionsSuccessStatus: 200 // 응답 상태 코드
 }));
@@ -27,7 +27,7 @@ app.get('/app/citydata', dmController.getAllCityData);
 app.get('/app/citydata/details/:category', dmController.getCityDataByCategory);
 
 // 혼잡도 전망 데이터 출력
-
+app.get('/app/citydata/details/fcst', dmController.getFcstData);
 
 // 장소 리스트 출력
 app.get('/app/citydata/list', dmController.getCityDataSorted);

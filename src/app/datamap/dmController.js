@@ -84,7 +84,17 @@ exports.getAllCityData = async function (req, res) {
  * Name: 상세보기_혼잡도전망 API
  * [GET] /app/citydata/details/fcst
  */
+exports.getFcstData = async function (req, res) {
+    try {
+        const fcstData = await dmProvider.getFcstData();
+        console.log("Forecast Data:", fcstData);
 
+        return res.send(response(responseStatus.SUCCESS, fcstData));
+    } catch (error) {
+        console.error("Error:", error);
+        return res.send(errResponse(responseStatus.SERVER_ERROR));
+    }
+};
 
 
 

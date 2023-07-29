@@ -55,6 +55,17 @@ async function selectCityData() {
     }
 }
 
+async function selectFcstData() {
+    try {
+        const query = "SELECT AREA_NM, FCST_PPLTN FROM citydata";
+        const result = await pool.query(query);
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
+
+
 module.exports = {
-    insertCityData, selectRecommendation , selectCityData
+    insertCityData, selectRecommendation, selectCityData, selectFcstData
 };

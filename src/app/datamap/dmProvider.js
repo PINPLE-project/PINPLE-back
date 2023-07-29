@@ -68,7 +68,17 @@ function sortDataByCongestion(dataArray, sortBy) {
     return dataArray;
 }
 
+//혼잡도전망 데이터를 반환하는 함수 
+async function getFcstData() {
+    try {
+        const fcstData = await dmDao.selectFcstData();
+        return fcstData;
+    } catch (error) {
+        throw error;
+    }
+}
+
 module.exports = {
-    sortDataByCongestion, getRandomLocationsByCategory
+    sortDataByCongestion, getRandomLocationsByCategory, getFcstData
 };
 
