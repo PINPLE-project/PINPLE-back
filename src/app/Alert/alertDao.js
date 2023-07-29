@@ -83,6 +83,7 @@ async function deleteAlert(connection, alertId) {
   return selectAlertRow;
 }
 
+// 장소명 모두 조회
 async function selectPlaces(connection) {
   const selectPlacesQuery = `
                               SELECT AREA_NM
@@ -117,20 +118,6 @@ async function selectDeviceToken(connection, userIdFromJWT) {
   return deviceToken;
 }
 
-// 혼잡도 정보 조회
-async function selectCongestionInfo(connection, placeName) {
-  const selectCongestionInfoQuery = `
-                                    SELECT placeCongestLVL, placeCongestMSG
-                                    FROM CityData
-                                    WHERE placeName = ?;
-                                    `;
-  const congestionInfo = await connection.query(
-    selectCongestionInfoQuery,
-    placeName
-  );
-  return congestionInfo;
-}
-
 // Alert 테이블에 혼잡도 정보 반영
 async function updateCongestionInfo(connection, congestionInfo, AlertParams) {
   const updateCongestionInfoQuery = `
@@ -161,6 +148,5 @@ module.exports = {
   selectPlaces,
   selectPlaceId,
   selectDeviceToken,
-  selectCongestionInfo,
   updateCongestionInfo,
 };
