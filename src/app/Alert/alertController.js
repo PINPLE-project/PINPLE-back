@@ -4,7 +4,6 @@ const { response, errResponse } = require("../../../config/response");
 const admin = require("../../../config/pushConnect");
 const alertService = require("../../app/Alert/alertService");
 const alertProvider = require("../../app/Alert/alertProvider");
-// const dmController = require("../datamap/dmController");
 
 /**
  * API No. 0
@@ -54,7 +53,7 @@ exports.postAlert = async function (req, res) {
   const placeList = await alertProvider.retrievePlaceList();
   const isValidPlace = (placeName) => {
     const isExistPlace = placeList[0].find(function (place) {
-      return place["placeName"] === placeName;
+      return place["AREA_NM"] === placeName;
     });
     if (isExistPlace) return true;
     else return false;
@@ -94,39 +93,33 @@ exports.postAlert = async function (req, res) {
   if (!isProperTime(time))
     return res.send(errResponse(baseResponse.ALERT_TIME_WRONG));
 
-  const datetime = new Date(time);
   // 사용자가 설정한 시간에 알림 푸시
-  schedule.scheduleJob(datetime, async function () {
+  schedule.scheduleJob(new Date(time), async function () {
     const placeId = await alertProvider.retrievePlaceId(placeName);
     const AlertParams = [userIdFromJWT, placeId, time];
 
     // 알림이 유효한지 확인
     const alertRows = await alertProvider.alertCheck(AlertParams);
     if (alertRows[0].length) {
-      // 실시간 공공도시데이터 가져와서 CityData 테이블에 업데이트
-      // dmController.getAllCityData();
-
+      const congestionInfo = await alertProvider.getCongestionInfo(placeName);
       const deviceToken = await alertProvider.retrieveDeviceToken(
         userIdFromJWT
-      );
-      const congestionInfo = await alertProvider.retrieveCongestionInfo(
-        placeName
       );
 
       // 혼잡도 정보가 비어있지 않은지 확인
       if (
-        congestionInfo[0][0]["placeCongestLVL"] != "" &&
-        congestionInfo[0][0]["placeCongestMSG"] != ""
+        congestionInfo["AREA_CONGEST_LVL"] != "" &&
+        congestionInfo["AREA_CONGEST_MSG"] != ""
       ) {
         const message = {
           notification: {
             title:
-              "현재" +
+              "현재 " +
               placeName +
-              "의 혼잡도는" +
-              congestionInfo[0][0]["placeCongestLVL"] +
+              "의 혼잡도는 " +
+              congestionInfo["AREA_CONGEST_LVL"] +
               "입니다.",
-            body: congestionInfo[0][0]["placeCongestMSG"],
+            body: congestionInfo["AREA_CONGEST_MSG"],
           },
           token: deviceToken,
         };
@@ -145,10 +138,10 @@ exports.postAlert = async function (req, res) {
             console.log("Error Sending message!!! : ", err);
           });
       } else {
-        console.log("DB에 혼잡도 정보가 존재하지 않습니다.");
+        console.log("혼잡도 정보가 존재하지 않습니다.");
       }
     } else {
-      console.log("Alert is deleted!!!");
+      console.log("설정된 알림이 삭제되어 PUSH 알림이 발송되지 않았습니다.");
     }
   });
 

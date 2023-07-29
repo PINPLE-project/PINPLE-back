@@ -85,8 +85,8 @@ async function deleteAlert(connection, alertId) {
 
 async function selectPlaces(connection) {
   const selectPlacesQuery = `
-                              SELECT placeName
-                              FROM CityData;
+                              SELECT AREA_NM
+                              FROM citydata2;
                               `;
   let placeRows = await connection.query(selectPlacesQuery);
   return placeRows;
@@ -95,9 +95,9 @@ async function selectPlaces(connection) {
 // placeName에 해당하는 placeId 조회
 async function selectPlaceId(connection, placeName) {
   const selectPlaceIdQuery = `
-                              SELECT placeId
-                              FROM CityData
-                              WHERE placeName = ?;
+                              SELECT place_id
+                              FROM citydata2
+                              WHERE AREA_NM = ?;
                               `;
   let placeId = await connection.query(selectPlaceIdQuery, placeName);
   return placeId;
@@ -143,8 +143,8 @@ async function updateCongestionInfo(connection, congestionInfo, AlertParams) {
   const updateCongestionInfoRow = await connection.query(
     updateCongestionInfoQuery,
     [
-      congestionInfo[0][0]["placeCongestLVL"],
-      congestionInfo[0][0]["placeCongestMSG"],
+      congestionInfo["AREA_CONGEST_LVL"],
+      congestionInfo["AREA_CONGEST_MSG"],
       ...AlertParams,
     ]
   );
