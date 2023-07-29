@@ -3,10 +3,9 @@ const responseStatus = require("/Users/moonyaeyoon/PINPLE-back/config/responseSt
 const { response, errResponse } = require("../../../config/response");
 const axios = require('axios');
 const convert = require('xml-js');
-const dmDao = require("./dmDao");
 const dmProvider = require("./dmProvider");
+const dmDao = require("./dmDao");
 const { pool } = require("/Users/moonyaeyoon/PINPLE-back/config/database")
-
 const urls = {
     park: ['POI089', 'POI091', 'POI092', 'POI093', 'POI094', 'POI095', 'POI096', 'POI099', 'POI100', 'POI106', 'POI108', 'POI109', 'POI110'],
     tourist: ['POI001', 'POI002', 'POI003', 'POI004', 'POI005', 'POI006', 'POI007'],
@@ -14,6 +13,45 @@ const urls = {
     station: ['POI013', 'POI014', 'POI015', 'POI016', 'POI017', 'POI018', 'POI033', 'POI034', 'POI038', 'POI039', 'POI040', 'POI042', 'POI043', 'POI045', 'POI046'],
     popular: ['POI062', 'POI063', 'POI066', 'POI068', 'POI069', 'POI070', 'POI071', 'POI072', 'POI074', 'POI078', 'POI079', 'POI084']
 };
+async function getCategoryData(category) {
+    let categoryUrls = [];
+    if (category === "all") {
+        categoryUrls = Object.values(urls).flat();
+    } else {
+        categoryUrls = urls[category] || [];
+    }
+    const responsePromises = categoryUrls.map(async (code) => {
+        const url = `http://openapi.seoul.go.kr:8088/72655a6f586a6a7539344e4a6f6755/xml/citydata/1/5/${code}`;
+        const response = await axios.get(url);
+        const xmlData = response.data;
+        const jsonData = convert.xml2json(xmlData, { compact: true, spaces: 4 });
+        const citydata = JSON.parse(jsonData);
+        // cityData가 undefined인 경우 빈 객체로 초기화
+        const cityData = citydata['SeoulRtd.citydata']['CITYDATA'];
+        // cityData가 undefined인 경우 빈 객체로 초기화
+        const extractedData = {
+            AREA_NM: '',
+            AREA_CONGEST_LVL: '',
+            AREA_CONGEST_MSG: '',
+            AREA_DATA_TIME: '',
+            FCST_PPLTN: [],
+        };
+
+        if (cityData) {
+            extractedData.AREA_NM = cityData['AREA_NM']['_text'];
+            extractedData.AREA_CONGEST_LVL = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_LVL']['_text'];
+            extractedData.AREA_CONGEST_MSG = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_MSG']['_text'];
+            extractedData.AREA_DATA_TIME = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['PPLTN_TIME']['_text'];
+            extractedData.FCST_PPLTN = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['FCST_PPLTN'];
+        }
+
+        return extractedData;
+    });
+
+
+    const extractedDataArray = await Promise.all(responsePromises);
+    return extractedDataArray;
+}
 
 /**
  * API No. 1
@@ -24,14 +62,14 @@ const urls = {
 exports.getAllCityData = async function (req, res) {
     try {
         const allCategoryData = {};
-        const categoryPromises = Object.keys(urls).map(async (category) => {
-            const categoryData = await userDao.getCategoryData(category);
+        const categoryPromises = Object.keys(dmDao.urls).map(async (category) => {
+            const categoryData = await dmDao.getCategoryData(category);
             allCategoryData[category] = categoryData;
         });
 
         await Promise.all(categoryPromises);
 
-        console.log("All Category Data:", allCategoryData); // 콘솔에 출력
+        console.log("Category FcstData:", allCategoryData); // 콘솔에 출력
 
         return res.send(response(responseStatus.SUCCESS, allCategoryData));
     } catch (error) {
@@ -41,39 +79,10 @@ exports.getAllCityData = async function (req, res) {
 };
 /**
  * API No. 2
- * Name: 상세보기_혼잡도전망 API 
+ * Name: 상세보기_혼잡도전망 API
  * [GET] /app/citydata/details/fcst
  */
-// Assuming you already have the XML data in a variable named `jsonData`
 
-exports.getCityDataForecast = async function (req, res) {
-    try {
-        const category = req.params.category; // Assuming the category is passed as a parameter, adjust this line if needed
-        const categoryData = await getCategoryData(category);
-
-        // Assuming you want to get the forecast data for the first location in the categoryData array
-        const firstLocationForecast = categoryData[0];
-
-        // Extract the forecast data
-        const forecastData = {
-            AREA_NM: firstLocationForecast.AREA_NM,
-            FCST_TIME: [],
-            FCST_CONGEST_LVL: []
-        };
-
-        for (const forecast of firstLocationForecast.FCST_PPLTN) {
-            forecastData.FCST_TIME.push(forecast.FCST_TIME);
-            forecastData.FCST_CONGEST_LVL.push(forecast.FCST_CONGEST_LVL);
-        }
-
-        console.log(`Forecast Data for ${category} - ${forecastData.AREA_NM}:`, forecastData); // Log the forecast data
-
-        return res.send(response(responseStatus.SUCCESS, forecastData));
-    } catch (error) {
-        console.error("Error:", error);
-        return res.send(errResponse(responseStatus.SERVER_ERROR));
-    }
-};
 
 
 
