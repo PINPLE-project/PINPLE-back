@@ -4,6 +4,7 @@ const { response, errResponse } = require("../../../config/response");
 const admin = require("../../../config/pushConnect");
 const alertService = require("../../app/Alert/alertService");
 const alertProvider = require("../../app/Alert/alertProvider");
+const dmController = require("../datamap/dmController");
 
 /**
  * API No. 0
@@ -102,12 +103,16 @@ exports.postAlert = async function (req, res) {
     // 알림이 유효하다면 푸시 알림 전송
     const alertRows = await alertProvider.alertCheck(AlertParams);
     if (alertRows[0].length) {
+      // 실시간 공공도시데이터 가져와서 CityData 테이블에 업데이트
+      dmController.getAllCityData();
+
       const deviceToken = await alertProvider.retrieveDeviceToken(
         userIdFromJWT
       );
       const congestionInfo = await alertProvider.retrieveCongestionInfo(
         placeName
       );
+
       const message = {
         notification: {
           title:
