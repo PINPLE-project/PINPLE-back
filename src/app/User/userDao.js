@@ -19,7 +19,30 @@ async function insertUser(connection, id, nickname){
   return insertQuestionRows;
 }
 
+async function selectNickExist(connection, nickname) {
+  // db 이름 변경 필요
+  const selectUserNickQuery = `
+                  SELECT nickname
+                  FROM user
+                  WHERE nickname = ?;
+                  `;
+  const [NickRows] = await connection.query(selectUserNickQuery, nickname);
+  return NickRows;
+}
+
+async function updatetUser(connection, userId, nickname, character, congestionAlarm, pinAlarm){
+  const updateUserQuery = `
+      UPDATE user
+      SET nickname = '${nickname}', charac = ${character}, congestionAlarm = ${congestionAlarm}, pinAlaram = ${pinAlarm}
+      WHERE userId = '${userId}';
+  `
+  const updateUserRow = await connection.query(updateUserQuery)
+  return updateUserRow
+}
+
 module.exports = {
     selectUserId,
     insertUser,
+    selectNickExist,
+    updatetUser
 };

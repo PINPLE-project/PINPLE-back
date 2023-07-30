@@ -28,4 +28,7 @@ module.exports = function(app) {
     // 카카오 로그인 및 회원가입 API
     app.get('/auth/kakao', user.kakaoLogin);
     app.get('/auth/kakao/callback', user.kakaoLoginRe);
+
+    // 닉네임 및 캐릭터 설정 회원가입
+    app.patch('/app/users', jwtMiddleware, user.patchSignup);
 }

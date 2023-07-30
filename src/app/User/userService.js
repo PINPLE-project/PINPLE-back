@@ -38,3 +38,17 @@ exports.postSignUp = async function(id, nickname) {
     console.log(`삽입된 유저 : ${createUserResult[0]}`)
     connection.release();
 }
+
+exports.updateSignUp = async function(userId, nickname, character, congestionAlarm, pinAlarm){
+    try{
+        //const updateUserParams = [userId, nickname, character, congestionAlarm, pinAlarme];
+        const connection = await pool.getConnection(async (conn) => conn);
+        const updateUserResult = await userDao.updatetUser(connection, userId, nickname, character, congestionAlarm, pinAlarm);
+        console.log(`삽입된 유저 : ${updateUserResult[0]}`)
+        connection.release();
+        return response(baseResponse.SUCCESS);
+    } catch(err){
+        console.log(`App - updateComment Service error\n: ${err.message} \n${JSON.stringify(err)}`);
+        return errResponse(baseResponse.DB_ERROR);
+    }
+}

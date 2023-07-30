@@ -203,3 +203,37 @@ exports.kakaoLoginRe = async function(req,res) {
     //console.log(user.data.kakao_account);
     //res.send({'email': email, 'nickname': nickname});
 }
+
+/**
+ * API No. 7
+ * Name: 회원가입 API
+ * [PATCH] /app/users
+ */
+exports.patchSignup = async function (req, res) {
+    // 소셜 회원가입 및 로그인한 유저의 JWT 토큰
+    const userId = req.verifiedToken.userId;
+
+    var {nickname, character, congestionAlarm, pinAlarm} = req.body;
+
+    const nickExist = await userProvider.nickExist(nickname); // 닉네임 중복 확인
+
+    const bad_word = /[시발 존나 바보]/g; // 부적절한 닉네임 리스트
+
+    // console.log(bad_word.test(nickname))
+    if (!nickname) 
+        return res.send(errResponse(baseResponse.SIGNUP_NICKNAME_EMPTY));
+    else if(bad_word.test(nickname)) // 부적절한 닉네임
+        return res.send(errResponse(baseResponse.SIGNUP_NICKNAME_IMPERTINENCE));      
+    else if(nickExist>=1)
+        return res.send(errResponse(baseResponse.SIGNUP_NICKNAME_EXIST));
+    else if (!character)
+        return res.send(errResponse(baseResponse.SIGNUP_CHARACTER_EMPTY));
+
+    //return res.send(req.verifiedToken);
+    if (!congestionAlarm) congestionAlarm = 0;
+    if (!pinAlarm) pinAlarm = 0;
+
+    const signUpResponse = await userService.updateSignUp(userId, nickname, character, congestionAlarm, pinAlarm); // db에 삽입
+
+    return res.send(signUpResponse);
+}
