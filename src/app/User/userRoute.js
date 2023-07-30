@@ -13,6 +13,7 @@ module.exports = function(app) {
             <a href="/google/login">Log in</a><br>
             <a href="/google/signup">Sign up</a><br>
             <a href="/auth/kakao">카카오 Log in</a><br>
+            <a href="/auth/kakao/unlink">카카오 탈퇴</a>
         `);
     });
 
@@ -31,4 +32,12 @@ module.exports = function(app) {
 
     // 닉네임 및 캐릭터 설정 회원가입
     app.patch('/app/users', jwtMiddleware, user.patchSignup);
+
+    // 카카오 로그아웃 API
+    app.get('/app/users/logout/kakao', jwtMiddleware, user.kakaoLogout);
+
+    // 구글 로그아웃 API
+    app.get('/app/users/logout/google', jwtMiddleware, user.googleLogout);
+
+    // app.get('/auth/kakao/unlink', user.kakaoDelete);
 }

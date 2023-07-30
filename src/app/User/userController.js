@@ -1,6 +1,7 @@
 const baseResponse = require("../../../config/responseStatus");
 const {response, errResponse} = require("../../../config/response");
 const secret_sign = require('../../../config/secret_sign')
+const secret = require('../../../config/secret')
 
 const axios = require('axios');
 const qs = require('qs');
@@ -117,6 +118,9 @@ exports.googleSignupRe = async function (req, res) {
             Authorization: `Bearer ${resp.data.access_token}`,
         },
     });
+
+    req.session.google = resp2.data; // 세션 저장
+
     const email = resp2.data.email;
     const nickname = resp2.data.name;
     console.log(email, nickname)
@@ -188,6 +192,9 @@ exports.kakaoLoginRe = async function(req,res) {
         res.json(err);
     }
 
+    req.session.kakao = user.data; // 세션 저장
+    console.log(req.session.kakao)
+
     const email = user.data.kakao_account.email; // 이메일(userId)
     const nickname = user.data.properties.nickname; // 닉네임
 
@@ -236,4 +243,14 @@ exports.patchSignup = async function (req, res) {
     const signUpResponse = await userService.updateSignUp(userId, nickname, character, congestionAlarm, pinAlarm); // db에 삽입
 
     return res.send(signUpResponse);
+}
+
+exports.kakaoLogout = async function(req, res) {
+    delete req.session.kakao;
+    return res.send(response(baseResponse.SUCCESS));
+}
+
+exports.googleLogout = async function(req, res) {
+    delete req.session.google;
+    return res.send(response(baseResponse.SUCCESS));
 }
