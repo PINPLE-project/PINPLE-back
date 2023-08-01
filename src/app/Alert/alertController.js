@@ -29,10 +29,6 @@ exports.getSetupAlert = async function (req, res) {
   // const userIdFromJWT = req.verifiedToken.userId;
 
   const alertList = await alertProvider.retrieveSetupAlertList(userIdFromJWT);
-  // 설정한 알림이 없는 경우
-  if (!alertList[0].length) {
-    return res.send(errResponse(baseResponse.ALERT_SETUP_EMPTY));
-  }
   return res.send(response(baseResponse.SUCCESS, alertList[0]));
 };
 
@@ -184,10 +180,6 @@ exports.getRecordAlert = async function (req, res) {
   // const userIdFromJWT = req.verifiedToken.userId;
 
   const alertList = await alertProvider.retrieveRecordAlertList(userIdFromJWT);
-  // 알림 기록이 없는 경우
-  if (!alertList[0].length) {
-    return res.send(errResponse(baseResponse.ALERT_RECORD_EMPTY));
-  }
   return res.send(response(baseResponse.SUCCESS, alertList[0]));
 };
 
@@ -235,9 +227,5 @@ exports.getRecordAlertByDate = async function (req, res) {
     userIdFromJWT,
     date
   );
-  // 해당 날짜에 대한 알림 기록이 없는 경우
-  if (!alertList[0].length) {
-    return res.send(errResponse(baseResponse.ALERT_EMPTY));
-  }
   return res.send(response(baseResponse.SUCCESS, alertList[0]));
 };
