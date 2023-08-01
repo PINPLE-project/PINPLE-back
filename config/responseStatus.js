@@ -6,7 +6,7 @@ module.exports = {
   DB_ERROR: { isSuccess: false, code: 4000, message: "DB 에러" },
   SERVER_ERROR: { isSuccess: false, code: 4001, message: "서버 에러" },
 
-  // 알림 관련 요청 오류
+  // 알림 관련 오류
   ALERT_EMPTY: {
     isSuccess: false,
     code: 400,
@@ -61,5 +61,16 @@ module.exports = {
     isSuccess: false,
     code: 400,
     message: "날짜+시간 형식을 정확히 입력해 주세요.",
+
+  // 신고 관련 오류
+  REPORT_EMPTY: {
+    isSuccess: false,
+    code: 400,
+    message: "신고 사유가 선택되지 않았습니다.",
+  },
+  REPORT_REDUNDANT: {
+    isSuccess: false,
+    code: 400,
+    message: "이미 신고한 핀리뷰입니다.",
   },
 };
