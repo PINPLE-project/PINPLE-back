@@ -146,18 +146,18 @@
 
 
   //도움이 되었어요 - user 추가
-  async function updatePinLikeUser1(connection, pinId, userId) {
-    const updatePinLikeQuery = `
+  async function insertPinLikeUser(connection, pinId, userId) {
+    const insertPinLikeQuery = `
           INSERT INTO likes (pinId, userId)
           VALUES (${pinId}, ${userId});
       `;
     //이미 누른 경우(누른 유저 리스트에 포함된 경우) -> 도움이 되었어요 여부로 확인
-    const updatePinLikeUserRows = await connection.query(
-      updatePinLikeQuery,
+    const insertPinLikeUserRows = await connection.query(
+      insertPinLikeQuery,
       pinId,
       userId
     );
-    return updatePinLikeUserRows;
+    return insertPinLikeUserRows;
   }
 
 
@@ -178,18 +178,18 @@
 
 
   //도움이 되었어요 취소 - 유저 삭제
-  async function updatePinLikeUser2(connection, pinId, userId) {
-    const updatePinLikeUserQuery = `
+  async function deletePinLikeUser(connection, pinId, userId) {
+    const deletePinLikeUserQuery = `
           DELETE FROM likes
           WHERE pinId = ${pinId} AND userId = ${userId};
       `;
       //안누른경우(누른 리스트에 포함되어 있지 않은 경우) -> 도움이 되었어요 여부로 확인
-    const updatePinLikeUserRows = await connection.query(
-      updatePinLikeUserQuery,
+    const deletePinLikeUserRows = await connection.query(
+      deletePinLikeUserQuery,
       pinId,
       userId
     );
-    return updatePinLikeUserRows;
+    return deletePinLikeUserRows;
   }
 
 
@@ -208,7 +208,7 @@
     deletePin,
     updatePinLikeCount1,
     updatePinLikeCount2,
-    updatePinLikeUser1,
-    updatePinLikeUser2
+    insertPinLikeUser,
+    deletePinLikeUser
 
  };
