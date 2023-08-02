@@ -39,11 +39,11 @@ exports.postPin = async function (req, res){
         return res.send(errResponse(baseResponse.PINVIEW_PINFEELING_EMPTY));
     }
     // 길이 체크
-    // if (contents){
-    //     if (contents.length > 300){
-    //         return res.send(errResponse(baseResponse.PINVIEW_CONTENTS_LENGTH));
-    //     }
-    // }
+    if (contents){
+        if (contents.length > 300){
+            return res.send(errResponse(baseResponse.PINVIEW_CONTENTS_LENGTH));
+        }
+    }
     
 
     const postPinResponse = await pinViewService.createPin(
