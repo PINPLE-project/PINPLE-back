@@ -44,7 +44,6 @@ exports.deletePin = async function(pinId){
 exports.postPinLike = async function(pinId, userId){
     try {
         const connection = await pool.getConnection(async (conn) => conn);
-        console.log(pinId, userId)
         const likeCountResult = await pinViewDao.updatePinLikeCount1(connection, pinId);
         const likeUserResult = await pinViewDao.updatePinLikeUser1(connection, pinId, userId);
         
