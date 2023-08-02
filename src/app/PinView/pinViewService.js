@@ -20,7 +20,7 @@ exports.createPin = async function (userId, longitude, latitude, address, pinCon
 
 
     } catch (err) {
-        // logger.error(`App - createPin Service error\n: ${err.message}`);
+        logger.error(`App - createPin Service error\n: ${err.message}`);
         console.log("createPin error");
         return errResponse(baseResponse.DB_ERROR);
     }
@@ -36,7 +36,7 @@ exports.deletePin = async function(pinId){
         return response(baseResponse.SUCCESS);
 
     } catch (err) {
-        // logger.error(`App - deletePin Service error\n: ${err.message}`);
+        logger.error(`App - deletePin Service error\n: ${err.message}`);
         return errResponse(baseResponse.DB_ERROR);
     }
 };
@@ -44,14 +44,14 @@ exports.deletePin = async function(pinId){
 exports.postPinLike = async function(pinId, userId){
     try {
         const connection = await pool.getConnection(async (conn) => conn);
-        const likeCountResult = await pinViewDao.insertPinLikeCount(connection, pinId);
+        const likeCountResult = await pinViewDao.updatePinLikeCount1(connection, pinId);
         const likeUserResult = await pinViewDao.insertPinLikeUser(connection, pinId, userId);
         
         connection.release();
         return response(baseResponse.SUCCESS);
 
     } catch (err) {
-        // logger.error(`App - postPinLike Service error\n: ${err.message}`);
+        logger.error(`App - postPinLike Service error\n: ${err.message}`);
         return errResponse(baseResponse.DB_ERROR);
     }
 };
@@ -59,14 +59,14 @@ exports.postPinLike = async function(pinId, userId){
 exports.deletePinLike = async function(pinId, userId){
     try {
         const connection = await pool.getConnection(async (conn) => conn);
-        const likeCountResult = await pinViewDao.deletePinLikeCount(connection, pinId);
+        const likeCountResult = await pinViewDao.updatePinLikeCount2(connection, pinId);
         const likeUserResult = await pinViewDao.deletePinLikeUser(connection, pinId, userId);
 
         connection.release();
         return response(baseResponse.SUCCESS);
 
     } catch (err) {
-        // logger.error(`App - deletePinLike Service error\n: ${err.message}`);
+        logger.error(`App - deletePinLike Service error\n: ${err.message}`);
         return errResponse(baseResponse.DB_ERROR);
     }
 };
@@ -82,7 +82,7 @@ exports.deleteMyPin = async function(userId, pinId){
         return response(baseResponse.SUCCESS);
 
     } catch (err) {
-        // logger.error(`App - deleteMyPin Service error\n: ${err.message}`);
+        logger.error(`App - deleteMyPin Service error\n: ${err.message}`);
         return errResponse(baseResponse.DB_ERROR);
     }
 };
