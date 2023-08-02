@@ -62,6 +62,7 @@ module.exports = {
     code: 400,
     message: "날짜+시간 형식을 정확히 입력해 주세요.",
   },
+
   // 신고 관련 오류
   REPORT_EMPTY: {
     isSuccess: false,
