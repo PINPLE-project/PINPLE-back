@@ -26,7 +26,7 @@ module.exports = function(app) {
 
 
      // @. my pin 조회 API -> 추후 myPage로 이동
-     app.get('/app/myPage/myPin/:userId', pinView.getMyPin);
+     app.get('/app/myPage/myPin', pinView.getMyPin);
 
 
      // @. my pin 삭제 API -> 추후 myPage로 이동
