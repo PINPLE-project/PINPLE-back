@@ -10,31 +10,6 @@ async function updateAllCityData(cityData) {
         throw error;
     }
 }
-// 추천장소 (랜덤3개)를 반환하는 함수
-async function getRandomLocationsByCategory(category) {
-    try {
-        const categoryData = await dmDao.selectCityDataByCategory(category);
-        // 배열을 랜덤으로 섞음
-        const randomLocations = shuffleArray(categoryData);
-        // 상위 3개의 요소를 추출
-        const selectedLocations = randomLocations.slice(0, count);
-        await dmDao.updateRecommendationPlace(selectedLocations);
-        return selectedLocations;
-    } catch (error) {
-        throw error;
-    }
-}
-
-// 배열을 랜덤으로 섞는 함수
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
-
-
 // 혼잡도 레벨에 따라 우선순위를 반환하는 함수
 function getCongestLevelPriority(congestLvl) {
     switch (congestLvl) {
@@ -103,6 +78,6 @@ async function getFcstData() {
 
 
 module.exports = {
-    updateAllCityData, getRandomLocationsByCategory, sortDataByCongestion, getFcstData, updatePlaceList
+    updateAllCityData, sortDataByCongestion, getFcstData, updatePlaceList
 };
 
