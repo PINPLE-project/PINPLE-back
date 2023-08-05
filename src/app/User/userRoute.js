@@ -7,7 +7,7 @@ module.exports = function(app) {
     app.get('/app/test', user.test);
     
     // 테스트용 화면
-    app.get('/', (req, res) => {
+    app.get('/login', (req, res) => {
         res.send(`
             <h1>회원가입 및 로그인</h1>
             <a href="/google/login">Log in</a><br>
