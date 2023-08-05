@@ -123,7 +123,7 @@ exports.googleSignupRe = async function (req, res) {
 
     const email = resp2.data.email;
     const nickname = resp2.data.name;
-    console.log(email, nickname)
+    // console.log(email, nickname)
 
     const idRows = await userProvider.idCheck(email); // 아이디 존재 여부 확인
     if (idRows.length < 1){ // 계정 생성된 것 없음
@@ -193,7 +193,6 @@ exports.kakaoLoginRe = async function(req,res) {
     }
 
     req.session.kakao = user.data; // 세션 저장
-    console.log(req.session.kakao)
 
     const email = user.data.kakao_account.email; // 이메일(userId)
     const nickname = user.data.properties.nickname; // 닉네임

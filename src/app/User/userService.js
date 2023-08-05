@@ -31,7 +31,7 @@ exports.postSignIn = async function(id, nickname) {
 }
 
 exports.postSignUp = async function(id, nickname) {
-    const insertUserParams = [id, nickname];
+    // const insertUserParams = [id, nickname];
     const connection = await pool.getConnection(async (conn) => conn);
 
     const createUserResult = await userDao.insertUser(connection, id, nickname);
