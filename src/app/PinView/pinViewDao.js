@@ -22,7 +22,7 @@
                       FROM cityData c, pinView p
                       WHERE (6371*acos(cos(radians(p.latitude))*cos(radians(c.lat))*cos(radians(c.lng)
                       -radians(p.longitude))+sin(radians(p.latitude))*sin(radians(c.lat)))) < 1),
-                      AND pinId = ${pinId};
+                      AND pinId = (SELECT MAX(pinId) from pinView);
                 `;
     const insertNearByPinRows = await connection.query(
       insertNearByPinQuery,
@@ -136,7 +136,6 @@
           SET likeCount = likeCount + 1
           WHERE pinId = ?;
       `;
-    //이미 누른 경우(누른 유저 리스트에 포함된 경우) -> 도움이 되었어요 여부로 확인
     const updatePinLikeCountRows = await connection.query(
       updatePinLikeCountQuery,
       pinId
@@ -151,7 +150,6 @@
           INSERT INTO likes (pinId, userId)
           VALUES (${pinId}, ${userId});
       `;
-    //이미 누른 경우(누른 유저 리스트에 포함된 경우) -> 도움이 되었어요 여부로 확인
     const insertPinLikeUserRows = await connection.query(
       insertPinLikeQuery,
       pinId,
@@ -168,7 +166,6 @@
           SET likeCount = likeCount - 1
           WHERE pinId = ?;
       `;
-      //안누른경우(누른 리스트에 포함되어 있지 않은 경우) -> 도움이 되었어요 여부로 확인
     const updatePinLikeCountRows = await connection.query(
       updatePinLikeCountQuery,
       pinId
@@ -183,7 +180,6 @@
           DELETE FROM likes
           WHERE pinId = ${pinId} AND userId = ${userId};
       `;
-      //안누른경우(누른 리스트에 포함되어 있지 않은 경우) -> 도움이 되었어요 여부로 확인
     const deletePinLikeUserRows = await connection.query(
       deletePinLikeUserQuery,
       pinId,

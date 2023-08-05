@@ -40,6 +40,7 @@ exports.deletePin = async function(pinId){
         return errResponse(baseResponse.DB_ERROR);
     }
 };
+
 //도움이 되었어요
 exports.postPinLike = async function(pinId, userId){
     try {
@@ -51,10 +52,11 @@ exports.postPinLike = async function(pinId, userId){
         return response(baseResponse.SUCCESS);
 
     } catch (err) {
-        // logger.error(`App - postPinLike Service error\n: ${err.message}`);
+        logger.error(`App - postPinLike Service error\n: ${err.message}`);
         return errResponse(baseResponse.DB_ERROR);
     }
 };
+
 //도움이 되었어요 취소
 exports.deletePinLike = async function(pinId, userId){
     try {
@@ -66,7 +68,7 @@ exports.deletePinLike = async function(pinId, userId){
         return response(baseResponse.SUCCESS);
 
     } catch (err) {
-        // logger.error(`App - deletePinLike Service error\n: ${err.message}`);
+        logger.error(`App - deletePinLike Service error\n: ${err.message}`);
         return errResponse(baseResponse.DB_ERROR);
     }
 };
@@ -82,7 +84,7 @@ exports.deleteMyPin = async function(userId, pinId){
         return response(baseResponse.SUCCESS);
 
     } catch (err) {
-        // logger.error(`App - deleteMyPin Service error\n: ${err.message}`);
+        logger.error(`App - deleteMyPin Service error\n: ${err.message}`);
         return errResponse(baseResponse.DB_ERROR);
     }
 };
