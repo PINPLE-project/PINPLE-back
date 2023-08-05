@@ -161,7 +161,7 @@ exports.getMyPin = async function (req, res) {
 
     const userId = req.params.userId;
 
-    if (!userId) return res.send(errResponse(baseResponse.PINVIEW_USERID_EMPTY));
+    // if (!userId) return res.send(errResponse(baseResponse.PINVIEW_USERID_EMPTY));
 
     const myPin = await pinViewProvider.retrieveMyPinList(userId);
     return res.send(response(baseResponse.SUCCESS, myPin));
