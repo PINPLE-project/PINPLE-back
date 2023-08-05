@@ -83,4 +83,7 @@ module.exports = {
     code: 400,
     message: "이미 신고한 핀리뷰입니다.",
   },
+
+
+
 };
