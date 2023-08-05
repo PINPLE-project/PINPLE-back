@@ -1,6 +1,7 @@
 .idea/*
 node_modules/*
 config/secret.js
+config/secret_sign.js
 package-lock.json
 .DS_Store
 
