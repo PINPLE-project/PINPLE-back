@@ -1,10 +1,10 @@
-const responseStatus = require("../../config/responseStatus");
-const { response, errResponse } = require("../../config/response");
+const responseStatus = require("../../../config/responseStatus");
+const { response, errResponse } = require("../../../config/response");
 const axios = require('axios');
 const convert = require('xml-js');
 const dmProvider = require("./dmProvider");
 const dmDao = require("./dmDao");
-const { pool } = require("../../config/database");
+const { pool } = require("../../../config/database");
 
 const urls = {
     park: ['POI089', 'POI091', 'POI092', 'POI093', 'POI094', 'POI095', 'POI096', 'POI099', 'POI100', 'POI106', 'POI108', 'POI109', 'POI110'],
@@ -13,6 +13,7 @@ const urls = {
     station: ['POI013', 'POI014', 'POI015', 'POI016', 'POI017', 'POI018', 'POI033', 'POI034', 'POI038', 'POI039', 'POI040', 'POI042', 'POI043', 'POI045', 'POI046'],
     popular: ['POI062', 'POI063', 'POI066', 'POI068', 'POI069', 'POI070', 'POI071', 'POI072', 'POI074', 'POI078', 'POI079', 'POI084']
 };
+
 async function getCategoryData(category) {
     let categoryUrls = [];
     if (category === "all") {
@@ -20,38 +21,32 @@ async function getCategoryData(category) {
     } else {
         categoryUrls = urls[category] || [];
     }
+
     const responsePromises = categoryUrls.map(async (code) => {
         const url = `http://openapi.seoul.go.kr:8088/72655a6f586a6a7539344e4a6f6755/xml/citydata/1/5/${code}`;
         const response = await axios.get(url);
         const xmlData = response.data;
         const jsonData = convert.xml2json(xmlData, { compact: true, spaces: 4 });
         const citydata = JSON.parse(jsonData);
+
         // cityData가 undefined인 경우 빈 객체로 초기화
         const cityData = citydata['SeoulRtd.citydata']['CITYDATA'];
+
         // cityData가 undefined인 경우 빈 객체로 초기화
-        const extractedData = {
-            AREA_NM: '',
-            AREA_CONGEST_LVL: '',
-            AREA_CONGEST_MSG: '',
-            AREA_DATA_TIME: '',
-            FCST_PPLTN: [],
+        return {
+            CATEGORY: category,
+            AREA_NM: cityData ? cityData['AREA_NM']['_text'] : '',
+            AREA_CONGEST_LVL: cityData ? cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_LVL']['_text'] : '',
+            AREA_CONGEST_MSG: cityData ? cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_MSG']['_text'] : '',
+            AREA_DATA_TIME: cityData ? cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['PPLTN_TIME']['_text'] : '',
+            FCST_PPLTN: cityData ? cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['FCST_PPLTN'] : [],
         };
-
-        if (cityData) {
-            extractedData.AREA_NM = cityData['AREA_NM']['_text'];
-            extractedData.AREA_CONGEST_LVL = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_LVL']['_text'];
-            extractedData.AREA_CONGEST_MSG = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['AREA_CONGEST_MSG']['_text'];
-            extractedData.AREA_DATA_TIME = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['PPLTN_TIME']['_text'];
-            extractedData.FCST_PPLTN = cityData['LIVE_PPLTN_STTS']['LIVE_PPLTN_STTS']['FCST_PPLTN'];
-        }
-
-        return extractedData;
     });
-
 
     const extractedDataArray = await Promise.all(responsePromises);
     return extractedDataArray;
 }
+
 
 /**
  * API No. 1
@@ -69,13 +64,15 @@ exports.getAllCityData = async function (req, res) {
 
         await Promise.all(categoryPromises);
 
-        console.log("Category FcstData:", allCategoryData); // 콘솔에 출력
+        console.log("all city  data :", allCategoryData); // 콘솔에 출력
         
         //citydata 테이블에 도시정보 업데이트
         Object.keys(urls).map(async (category) => {
             const categoryData = await allCategoryData[category];
-            dmDao.insertCityData(categoryData);
+            dmProvider.updateAllCityData(categoryData);
         })
+
+
         return res.send(response(responseStatus.SUCCESS, allCategoryData));
     } catch (error) {
         console.error("Error:", error);
@@ -117,9 +114,9 @@ exports.getFcstData = async function (req, res) {
 exports.getCityDataByCategory = async function (req, res) {
     try {
         const category = req.params.category;
-        const randomLocations = await dmProvider.getRandomLocationsByCategory(category, 3);
+        const randomLocations = await dmProvider.getRandomLocationsByCategory(category);
 
-        console.log(`Category Data for ${category}:`, randomLocations);
+        console.log(`Category Data for ${category}:`, randomLocations); // Log the randomly selected locations
 
         return res.send(response(responseStatus.SUCCESS, randomLocations));
     } catch (error) {
@@ -127,7 +124,6 @@ exports.getCityDataByCategory = async function (req, res) {
         return res.send(errResponse(responseStatus.SERVER_ERROR));
     }
 };
-
 
 /**
  * API No. 5
@@ -140,8 +136,7 @@ exports.getCityDataSorted = async function (req, res) {
         const sortBy = req.query.sortby;
         const cityData = await dmDao.selectCityData();
         const sortedData = await dmProvider.sortDataByCongestion(cityData, sortBy);
-
-        console.log(`Sorted Data (Sort By: ${sortBy}):`, sortedData); // 콘솔에 정렬된 데이터 출력
+        console.log(`Sorted Data (Sort By: ${sortBy}):`, sortedData); 
 
         return res.send(response(responseStatus.SUCCESS, sortedData));
     } catch (error) {

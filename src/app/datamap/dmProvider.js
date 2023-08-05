@@ -1,17 +1,31 @@
 const { pool } = require("../../../config/database");
 const dmDao = require("./dmDao");
 
-//추천장소 (랜덤3개)를 반환하는 함수
-async function getRandomLocationsByCategory(category, count) {
+// citydata 테이블의 모든 데이터를 삭제하고 새로운 데이터를 추가하는 함수
+async function updateAllCityData(cityData) {
     try {
-        const categoryData = await dmDao.selectRecommendation(category);
-        const randomLocations = shuffleArray(categoryData).slice(0, count);
-        return randomLocations;
+        await dmDao.deleteAllCityData();
+        await dmDao.updateCityData(cityData);
+    } catch (error) {
+        throw error;
+    }
+}
+// 추천장소 (랜덤3개)를 반환하는 함수
+async function getRandomLocationsByCategory(category) {
+    try {
+        const categoryData = await dmDao.selectCityDataByCategory(category);
+        // 배열을 랜덤으로 섞음
+        const randomLocations = shuffleArray(categoryData);
+        // 상위 3개의 요소를 추출
+        const selectedLocations = randomLocations.slice(0, count);
+        await dmDao.updateRecommendationPlace(selectedLocations);
+        return selectedLocations;
     } catch (error) {
         throw error;
     }
 }
 
+// 배열을 랜덤으로 섞는 함수
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -24,11 +38,13 @@ function shuffleArray(array) {
 // 혼잡도 레벨에 따라 우선순위를 반환하는 함수
 function getCongestLevelPriority(congestLvl) {
     switch (congestLvl) {
-        case '상당히혼잡':
+        case '붐빔':
+            return 4;
+        case '약간 붐빔':
             return 3;
-        case '다소혼잡':
+        case '보통':
             return 2;
-        case '원활':
+        case '여유' :
             return 1;
         default:
             return 0;
@@ -67,7 +83,14 @@ function sortDataByCongestion(dataArray, sortBy) {
     }
     return dataArray;
 }
-
+//장소 목록 업데이트 
+async function updatePlaceList(dataArray) {
+    try {
+        await dmDao.insertPlaceListData(dataArray);
+    } catch (error) {
+        throw error;
+    }
+}
 //혼잡도전망 데이터를 반환하는 함수 
 async function getFcstData() {
     try {
@@ -78,7 +101,8 @@ async function getFcstData() {
     }
 }
 
+
 module.exports = {
-    sortDataByCongestion, getRandomLocationsByCategory, getFcstData
+    updateAllCityData, getRandomLocationsByCategory, sortDataByCongestion, getFcstData, updatePlaceList
 };
 

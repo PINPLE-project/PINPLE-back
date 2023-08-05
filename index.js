@@ -19,13 +19,12 @@ app.use(cors({
 app.get('/', (req, res) => {
     res.send('Hello, Express!');
 });
-const dmController = require("./dmController");
+const dmController = require('./src/app/datamap/dmController');
 // 모든 카테고리 데이터 출력
 app.get('/app/citydata', dmController.getAllCityData);
 
-// 특정 카테고리 데이터 출력
+// 추천 장소 데이터 출력
 app.get('/app/citydata/details/:category', dmController.getCityDataByCategory);
-
 // 혼잡도 전망 데이터 출력
 app.get('/app/citydata/details/fcst', dmController.getFcstData);
 
