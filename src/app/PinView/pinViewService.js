@@ -51,7 +51,7 @@ exports.postPinLike = async function(pinId, userId){
         return response(baseResponse.SUCCESS);
 
     } catch (err) {
-        logger.error(`App - postPinLike Service error\n: ${err.message}`);
+        // logger.error(`App - postPinLike Service error\n: ${err.message}`);
         return errResponse(baseResponse.DB_ERROR);
     }
 };
@@ -66,7 +66,7 @@ exports.deletePinLike = async function(pinId, userId){
         return response(baseResponse.SUCCESS);
 
     } catch (err) {
-        logger.error(`App - deletePinLike Service error\n: ${err.message}`);
+        // logger.error(`App - deletePinLike Service error\n: ${err.message}`);
         return errResponse(baseResponse.DB_ERROR);
     }
 };
@@ -82,7 +82,7 @@ exports.deleteMyPin = async function(userId, pinId){
         return response(baseResponse.SUCCESS);
 
     } catch (err) {
-        logger.error(`App - deleteMyPin Service error\n: ${err.message}`);
+        // logger.error(`App - deleteMyPin Service error\n: ${err.message}`);
         return errResponse(baseResponse.DB_ERROR);
     }
 };
