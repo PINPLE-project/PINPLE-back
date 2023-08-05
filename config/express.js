@@ -27,6 +27,7 @@ module.exports = function () {
   require("../src/app/Alert/alertRoute")(app);
   require("../src/app/Report/reportRoute")(app);
   require("../src/app/datamap/dmRoute")(app);
+  require("../src/app/PinView/pinViewRoute")(app);
 
   return app;
 };

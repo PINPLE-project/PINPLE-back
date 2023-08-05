@@ -1,7 +1,7 @@
 const schedule = require("node-schedule");
 const baseResponse = require("../../../config/responseStatus");
 const { response, errResponse } = require("../../../config/response");
-const admin = require("../../../config/pushConnect");
+// const admin = require("../../../config/pushConnect");
 const alertService = require("../../app/Alert/alertService");
 const alertProvider = require("../../app/Alert/alertProvider");
 
