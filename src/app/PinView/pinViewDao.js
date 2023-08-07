@@ -197,6 +197,7 @@
     insertPin,
     selectPin,
     selectPinById,
+    insertNearByPin,
     deleteRecentPin,
     insertRecentPin,
     selectRecentPin,
