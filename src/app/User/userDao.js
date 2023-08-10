@@ -1,16 +1,16 @@
-  // id로 유저 조회
-  async function selectUserId(connection, id) {
-    // db 이름 변경 필요
-    const selectUserIdQuery = `
+// id로 유저 조회
+async function selectUserId(connection, id) {
+  // db 이름 변경 필요
+  const selectUserIdQuery = `
                     SELECT userId
                     FROM user
                     WHERE userId = ?;
                     `;
-    const [idRows] = await connection.query(selectUserIdQuery, id);
-    return idRows;
+  const [idRows] = await connection.query(selectUserIdQuery, id);
+  return idRows;
 }
 
-async function insertUser(connection, id, nickname){
+async function insertUser(connection, id, nickname) {
   const insertQuestionQuery = `
           INSERT INTO user(userId, nickname, socialType) VALUES('${id}', '${nickname}', IF('${id}' LIKE '%@gmail.com', 2, 1));
   `;
@@ -30,19 +30,27 @@ async function selectNickExist(connection, nickname) {
   return NickRows;
 }
 
-async function updatetUser(connection, userId, nickname, character, congestionAlarm, pinAlarm){
+async function updatetUser(
+  connection,
+  userId,
+  nickname,
+  character,
+  congestionAlarm,
+  pinAlarm,
+  deviceToken
+) {
   const updateUserQuery = `
       UPDATE user
-      SET nickname = '${nickname}', charac = ${character}, congestionAlarm = ${congestionAlarm}, pinAlaram = ${pinAlarm}
+      SET nickname = '${nickname}', charac = ${character}, congestionAlarm = ${congestionAlarm}, pinAlaram = ${pinAlarm}, deviceToken = ${deviceToken}
       WHERE userId = '${userId}';
-  `
-  const updateUserRow = await connection.query(updateUserQuery)
-  return updateUserRow
+  `;
+  const updateUserRow = await connection.query(updateUserQuery);
+  return updateUserRow;
 }
 
 module.exports = {
-    selectUserId,
-    insertUser,
-    selectNickExist,
-    updatetUser
+  selectUserId,
+  insertUser,
+  selectNickExist,
+  updatetUser,
 };
