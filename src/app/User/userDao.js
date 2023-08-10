@@ -40,8 +40,8 @@ async function updatetUser(
   deviceToken
 ) {
   const updateUserQuery = `
-      UPDATE user
-      SET nickname = '${nickname}', charac = ${character}, congestionAlarm = ${congestionAlarm}, pinAlaram = ${pinAlarm}, deviceToken = ${deviceToken}
+      UPDATE User
+      SET nickname = '${nickname}', charac = ${character}, congestionAlarm = ${congestionAlarm}, pinAlarm = ${pinAlarm}, deviceToken = '${deviceToken}'
       WHERE userId = '${userId}';
   `;
   const updateUserRow = await connection.query(updateUserQuery);
