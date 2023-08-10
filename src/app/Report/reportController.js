@@ -3,16 +3,6 @@ const baseResponse = require("../../../config/responseStatus");
 const { response, errResponse } = require("../../../config/response");
 
 /**
- * API No. 0
- * Name: 테스트용 API
- * [GET] /app/test
- */
-
-exports.test = async function (req, res) {
-  return res.send(response(baseResponse.SUCCESS));
-};
-
-/**
  * API No. 1
  * Name: 신고 API
  * [POST] /app/pinview/:pinId/report
@@ -21,13 +11,12 @@ exports.test = async function (req, res) {
 exports.postReport = async function (req, res) {
   /**
    * Path Variable: pinviewId
-   * JWT: userIdFromJWT
+   * JWT: userId
    * Body: reason1, reason2, reason3, reason4, reason5
    */
   const pinviewId = req.params.pinId;
-  const { userIdFromJWT, reason1, reason2, reason3, reason4, reason5 } =
-    req.body;
-  // const userIdFromJWT = req.verifiedToken.userId;
+  const { reason1, reason2, reason3, reason4, reason5 } = req.body;
+  const userId = req.verifiedToken.userId;
 
   reason = [reason1, reason2, reason3, reason4, reason5];
 
@@ -38,7 +27,7 @@ exports.postReport = async function (req, res) {
 
   const reportResponse = await reportService.createReport(
     pinviewId,
-    userIdFromJWT,
+    userId,
     reason
   );
   return res.send(reportResponse);

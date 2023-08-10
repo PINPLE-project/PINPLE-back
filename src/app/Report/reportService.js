@@ -5,20 +5,17 @@ const reportProvider = require("./reportProvider");
 const baseResponse = require("../../../config/responseStatus");
 const { response, errResponse } = require("../../../config/response");
 
-exports.createReport = async function (pinviewId, userIdFromJWT, reason) {
+exports.createReport = async function (pinviewId, userId, reason) {
   try {
     // 신고 중복 확인
-    const reportRows = await reportProvider.reportCheck(
-      userIdFromJWT,
-      pinviewId
-    );
+    const reportRows = await reportProvider.reportCheck(userId, pinviewId);
     if (reportRows[0].length) {
       console.log("중복된 신고");
       return errResponse(baseResponse.REPORT_REDUNDANT);
     }
 
     const connection = await pool.getConnection(async (conn) => conn);
-    const reportParams = [pinviewId, userIdFromJWT, ...reason];
+    const reportParams = [pinviewId, userId, ...reason];
     const createReportResult = await reportDao.insertReport(
       connection,
       reportParams

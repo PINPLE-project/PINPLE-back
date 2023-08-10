@@ -1,5 +1,5 @@
 // userId에 대해 설정된 알림 모두 조회
-async function selectSetupAlert(connection, userIdFromJWT) {
+async function selectSetupAlert(connection, userId) {
   const selectSetupAlertListQuery = `
                                     SELECT c.AREA_NM, a.time
                                     FROM Alert as a
@@ -9,13 +9,13 @@ async function selectSetupAlert(connection, userIdFromJWT) {
                                     `;
   const selectAlertRow = await connection.query(
     selectSetupAlertListQuery,
-    userIdFromJWT
+    userId
   );
   return selectAlertRow;
 }
 
 // userId에 대한 알림 기록 모두 조회
-async function selectRecordAlert(connection, userIdFromJWT) {
+async function selectRecordAlert(connection, userId) {
   const selectRecordAlertListQuery = `
                                     SELECT c.AREA_NM, a.time, a.congestionLVL
                                     FROM Alert as a
@@ -25,13 +25,13 @@ async function selectRecordAlert(connection, userIdFromJWT) {
                                     `;
   const selectAlertRow = await connection.query(
     selectRecordAlertListQuery,
-    userIdFromJWT
+    userId
   );
   return selectAlertRow;
 }
 
 // userId에 대해 날짜에 해당하는 알림 기록 조회
-async function selectRecordAlertByDate(connection, userIdFromJWT, date) {
+async function selectRecordAlertByDate(connection, userId, date) {
   const selectRecordAlertListQuery = `
                                     SELECT c.AREA_NM, a.time, a.congestionLVL
                                     FROM Alert as a
@@ -40,7 +40,7 @@ async function selectRecordAlertByDate(connection, userIdFromJWT, date) {
                                     ORDER BY a.time;
                                     `;
   const selectAlertRow = await connection.query(selectRecordAlertListQuery, [
-    userIdFromJWT,
+    userId,
     date,
   ]);
   return selectAlertRow;
@@ -108,16 +108,13 @@ async function selectPlaceId(connection, placeName) {
 }
 
 // 디바이스 토큰 조회
-async function selectDeviceToken(connection, userIdFromJWT) {
+async function selectDeviceToken(connection, userId) {
   const selectDeviceTokenQuery = `
                                   SELECT deviceToken
                                   FROM User
                                   WHERE userId = ?;
                                   `;
-  const deviceToken = await connection.query(
-    selectDeviceTokenQuery,
-    userIdFromJWT
-  );
+  const deviceToken = await connection.query(selectDeviceTokenQuery, userId);
   return deviceToken;
 }
 

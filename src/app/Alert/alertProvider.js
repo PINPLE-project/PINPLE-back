@@ -3,33 +3,27 @@ const convert = require("xml-js");
 const { pool } = require("../../../config/database");
 const alertDao = require("./alertDao");
 
-exports.retrieveSetupAlertList = async function (userIdFromJWT) {
+exports.retrieveSetupAlertList = async function (userId) {
   const connection = await pool.getConnection(async (conn) => conn);
-  const alertListResult = await alertDao.selectSetupAlert(
-    connection,
-    userIdFromJWT
-  );
+  const alertListResult = await alertDao.selectSetupAlert(connection, userId);
   connection.release();
 
   return alertListResult;
 };
 
-exports.retrieveRecordAlertList = async function (userIdFromJWT) {
+exports.retrieveRecordAlertList = async function (userId) {
   const connection = await pool.getConnection(async (conn) => conn);
-  const alertListResult = await alertDao.selectRecordAlert(
-    connection,
-    userIdFromJWT
-  );
+  const alertListResult = await alertDao.selectRecordAlert(connection, userId);
   connection.release();
 
   return alertListResult;
 };
 
-exports.retrieveRecordAlertListByDate = async function (userIdFromJWT, date) {
+exports.retrieveRecordAlertListByDate = async function (userId, date) {
   const connection = await pool.getConnection(async (conn) => conn);
   const alertListResult = await alertDao.selectRecordAlertByDate(
     connection,
-    userIdFromJWT,
+    userId,
     date
   );
   connection.release();
@@ -53,12 +47,9 @@ exports.retrievePlaceId = async function (placeName) {
   return placeId[0][0]["place_id"];
 };
 
-exports.retrieveDeviceToken = async function (userIdFromJWT) {
+exports.retrieveDeviceToken = async function (userId) {
   const connection = await pool.getConnection(async (conn) => conn);
-  const deviceToken = await alertDao.selectDeviceToken(
-    connection,
-    userIdFromJWT
-  );
+  const deviceToken = await alertDao.selectDeviceToken(connection, userId);
   connection.release();
 
   return deviceToken[0][0]["deviceToken"];
