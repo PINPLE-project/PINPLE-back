@@ -238,6 +238,38 @@ async function selectPlaceListData() {
   }
 }
 
+// erd cloud에 업로드한 table 형태 참고해서 insert하고 select하도록 했습니다! 편하신대로 수정하셔도 괜찮습니다!
+async function insertScrap(connection, insertScrapParams){
+  const insertQuestionQuery = `
+          INSERT INTO scrap(userId, place_id) 
+          VALUES(?, ?);
+  `;
+
+  const insertScrapRows = await connection.query(insertQuestionQuery, insertScrapParams);
+  return insertScrapRows;
+}
+
+// scrap 테이블에 저장된 place_id로 db에 저장된 citydata를 조회하도록 했습니다!
+async function selectScraps(connection, userId){
+  const selectScrapsQuery = `
+      SELECT c.area_nm, c.road_addr, c.area_congest_lvl
+      FROM citydata c JOIN scrap s ON c.place_id = s.place_id
+      where s.userId = ?;
+  `
+  const [questionRow] = await connection.query(selectScrapsQuery, userId);
+  return questionRow;
+}
+
+async function deleteScrap(connection, deleteScrapParams){
+  const deleteQuestionQuery = `
+      DELETE FROM scrap
+      WHERE userId = ? AND place_id =?;
+  `
+  const deleteQuestionRows = await connection.query(deleteQuestionQuery, deleteScrapParams);
+  return deleteQuestionRows;
+
+}
+
 module.exports = {
   deleteAllCityData,
   updateCityData,
@@ -249,4 +281,7 @@ module.exports = {
   selectFcstData,
   insertPlaceListData,
   selectPlaceListData,
+  insertScrap,
+  selectScraps,
+  deleteScrap
 };
