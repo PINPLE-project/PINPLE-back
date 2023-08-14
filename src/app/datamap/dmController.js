@@ -4,6 +4,7 @@ const axios = require("axios");
 const convert = require("xml-js");
 const dmProvider = require("./dmProvider");
 const dmDao = require("./dmDao");
+const dmService = require("./dmService");
 const { pool } = require("../../../config/database");
 
 const urls = {
@@ -79,12 +80,12 @@ async function getCategoryData(category) {
     const xmlData = response.data;
     const jsonData = convert.xml2json(xmlData, { compact: true, spaces: 4 });
     const citydata = JSON.parse(jsonData);
-
     // cityData가 undefined인 경우 빈 객체로 초기화
     const cityData = citydata["SeoulRtd.citydata"]["CITYDATA"];
 
     // cityData가 undefined인 경우 빈 객체로 초기화
     return {
+      CODE: code,
       CATEGORY: category,
       AREA_NM: cityData ? cityData["AREA_NM"]["_text"] : "",
       AREA_CONGEST_LVL: cityData
@@ -115,7 +116,6 @@ async function getCategoryData(category) {
  * Name: 장소 혼잡도 API (전체)
  * [GET] /app/citydata
  */
-
 exports.getAllCityData = async function (req, res) {
   try {
     const allCategoryData = {};
@@ -125,7 +125,6 @@ exports.getAllCityData = async function (req, res) {
     });
 
     await Promise.all(categoryPromises);
-
     console.log("all city  data :", allCategoryData); // 콘솔에 출력
 
     //citydata 테이블에 도시정보 업데이트
@@ -140,6 +139,30 @@ exports.getAllCityData = async function (req, res) {
     return res.send(errResponse(responseStatus.SERVER_ERROR));
   }
 };
+/**
+ * API No. 2
+ * Name: 지도에서 마커 클릭 조회 API
+ * [GET] /app/pinclick/:code
+ */
+
+exports.pinclickByCode = async function (req, res) {
+  const placeCode = req.params.code; // URL 파라미터에서 이름 가져오기
+  try {
+    const placeData = await dmService.createclickPin(placeCode);
+    console.log("Place Data:", placeData); // 결과값 콘솔에 출력
+
+    return res.send(response(responseStatus.SUCCESS, placeData));
+  } catch (error) {
+    console.error("Error:", error);
+    return res.send(errResponse(responseStatus.SERVER_ERROR));
+  }
+};
+
+/**
+ * API No. 3
+ * Name: 장소 스크랩 (클릭한 장소)
+ * [GET] /app/pinclick/:code/scrap
+ */
 
 /**
  * API No. 2
@@ -147,15 +170,9 @@ exports.getAllCityData = async function (req, res) {
  * [GET] /app/citydata/details/fcst
  */
 exports.getFcstData = async function (req, res) {
-  try {
-    const fcstData = await dmProvider.getFcstData();
-    console.log("Forecast Data:", fcstData);
-
-    return res.send(response(responseStatus.SUCCESS, fcstData));
-  } catch (error) {
-    console.error("Error:", error);
-    return res.send(errResponse(responseStatus.SERVER_ERROR));
-  }
+  console.log("실행되긴하니?");
+  const FcstData = await dmProvider.selectFcstData();
+  return res.send(response(baseResponse.SUCCESS, FcstData));
 };
 
 /**
@@ -182,6 +199,7 @@ exports.getCityDataByCategory = async function (req, res) {
     randomLocations.map(async (data) => {
       const values = [
         data.CATEGORY,
+        data.CODE,
         data.AREA_NM,
         data.AREA_CONGEST_LVL,
         data.AREA_CONGEST_MSG,
@@ -216,8 +234,7 @@ function shuffleArray(array) {
 exports.getCityDataSorted = async function (req, res) {
   try {
     const sortBy = req.query.sortby;
-    const cityData = await dmDao.selectCityData();
-    const sortedData = await dmProvider.sortDataByCongestion(cityData, sortBy);
+    const sortedData = await dmProvider.sortDataByCongestion(sortBy);
     console.log(`Sorted Data (Sort By: ${sortBy}):`, sortedData);
 
     return res.send(response(responseStatus.SUCCESS, sortedData));

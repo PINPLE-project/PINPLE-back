@@ -2,25 +2,26 @@ const axios = require("axios");
 const convert = require("xml-js");
 const { pool } = require("../../../config/database");
 
-//전체 도시데이터 삽입
-async function insertCityData(extractedDataArray) {
+// 공공데이터 불러오기
+async function updateCityData(connection, extractedDataArray) {
   try {
     // 쿼리문 작성
     const insertcitydataquery = `
-      INSERT INTO citydata (CATEGORY, AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO citydata (CATEGORY,CODE, AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     // 모든 데이터를 Promise.all로 처리하여 데이터베이스에 저장
     const savePromises = extractedDataArray.map(async (data) => {
       const values = [
         data.CATEGORY,
+        data.CODE,
         data.AREA_NM,
         data.AREA_CONGEST_LVL,
         data.AREA_CONGEST_MSG,
         data.AREA_DATA_TIME,
         JSON.stringify(data.FCST_PPLTN),
       ];
-      return pool.query(insertcitydataquery, values);
+      return connection.query(insertcitydataquery, values);
     });
 
     // 모든 저장 프로미스를 병렬로 실행
@@ -33,6 +34,14 @@ async function insertCityData(extractedDataArray) {
     throw error;
   }
 }
+
+// citydata테이블 데이터 삭제 (업데이트 위해)
+async function deleteAllCityData(connection) {
+  const delectecityDataquery = "DELETE FROM citydata";
+  const deletecitydatarows = await connection.query(delectecityDataquery);
+  return deletecitydatarows;
+}
+
 //전체 도시데이터 조회
 async function selectCityData() {
   try {
@@ -43,40 +52,61 @@ async function selectCityData() {
     throw error;
   }
 }
-// citydata 테이블에 있는 모든 데이터 삭제
-async function deleteAllCityData() {
-  try {
-    const query = "DELETE FROM citydata";
-    await pool.query(query);
-  } catch (error) {
-    throw error;
-  }
+
+//클릭한 마커의 장소 데이터만 불러오기 (by code)
+async function selectPinDataByCode(connection, placeCode) {
+  const selectpinquery = `
+      SELECT CODE, CATEGORY, AREA_NM, AREA_CONGEST_LVL
+      FROM citydata
+      WHERE CODE = ?
+    `;
+  const [selectpinrows] = await connection.query(selectpinquery, [placeCode]);
+  return selectpinrows;
 }
 
-// citydata 테이블에 데이터를 업데이트하는 함수
-async function updateCityData(dataArray) {
-  try {
-    const insertCityDataQuery = `
-      INSERT INTO citydata (CATEGORY, AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    const savePromises = dataArray.map(async (data) => {
-      const values = [
-        data.CATEGORY,
-        data.AREA_NM,
-        data.AREA_CONGEST_LVL,
-        data.AREA_CONGEST_MSG,
-        data.AREA_DATA_TIME,
-        JSON.stringify(data.FCST_PPLTN),
-      ];
-      return pool.query(insertCityDataQuery, values);
-    });
+/*
+ *  장소 스크랩
+ */
+//스크랩 가능한 장소 개수 확인 (최대 3개)
+async function checkScrapLimit(connection) {
+  const selectScrapCountQuery = `
+    SELECT COUNT(*) AS count 
+    FROM scrapPlace
+  `;
+  const [selectScrapCountrows] = await connection.query(selectScrapCountQuery);
+  const currentScrapCount = selectScrapCountrows[0].count;
+  return currentScrapCount < 3; // 최대 스크랩 가능 개수는 3개
+}
 
-    await Promise.all(savePromises);
-    return true;
-  } catch (error) {
-    throw error;
-  }
+//이미 스크랩한 장소인지 확인
+async function checkIfAlreadyScrapped(connection, placeCode) {
+  const selectScrapQuery = `
+    SELECT * FROM scrapPlace
+    WHERE CODE = ?
+  `;
+  const [selectScraprows] = await connection.query(selectScrapQuery, [
+    placeCode,
+  ]);
+  return selectScraprows.length > 0;
+}
+
+//장소 스크랩 추가
+async function insertScrappedPlace(connection, placeCode) {
+  const insertScrapQuery = `
+    INSERT INTO scrapPlace (placeCode) 
+    VALUES (?)
+  `;
+  await connection.query(insertScrapQuery, [placeCode]);
+}
+
+// 장소 스크랩 삭제
+async function deleteScrappedPlace(connection, placeCode) {
+  const deleteScrapQuery = `
+    DELETE 
+    FROM scrapPlace 
+    WHERE CODE = ?
+  `;
+  await connection.query(deleteScrapQuery, [placeCode]);
 }
 
 // 추천장소 테이블에 데이터를 업데이트하는 함수
@@ -148,8 +178,8 @@ async function selectCityDataByCategory(category) {
 async function updateRecommendationPlace(dataArray) {
   try {
     const insertRecommendationQuery = `
-      INSERT INTO recommendationPlace (CATEGORY, AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO recommendationPlace (CATEGORY,CODE, AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     // 성공적으로 저장된 경우 반환
     return pool.query(insertRecommendationQuery, dataArray);
@@ -159,35 +189,30 @@ async function updateRecommendationPlace(dataArray) {
   }
 }
 // 데이터를 FcstData 테이블에 삽입하는 함수
-async function insertFcstData(dataArray) {
-  try {
-    const insertDataQuery = `
-            INSERT INTO FcstData (AREA_NM, FCST_PPLTN)
-            VALUES (?, ?)
-        `;
+async function insertFcstData(connection) {
+  const selectfcstQuery = `
+    SELECT AREA_NM, FCST_PPLTN
+    FROM citydata
+  `;
+  const [fcstRow] = await connection.query(selectfcstQuery);
+  // FcstData 테이블에 데이터를 삽입
+  const insertfcstQuery = `
+      INSERT INTO FcstData (AREA_NM, FCST_PPLTN)
+      VALUES ?
+    `;
 
-    // dataArray를 map으로 순회하며 각 데이터를 삽입
-    const insertPromises = dataArray.map(async (data) => {
-      const values = [data.AREA_NM, JSON.stringify(data.FCST_PPLTN)];
+  const values = fcstRows.map((row) => [row.AREA_NM, row.FCST_PPLTN]);
 
-      return pool.query(insertDataQuery, values);
-    });
-
-    // 모든 삽입 프로미스를 병렬로 실행
-    await Promise.all(insertPromises);
-
-    // 성공적으로 삽입된 경우 반환
-    return true;
-  } catch (error) {
-    // 삽입 중 오류가 발생한 경우 에러를 던짐
-    throw error;
-  }
+  await connection.query(insertfcstQuery, [values]);
+  // 삽입된 데이터 출력
+  console.log("Inserted FcstData Row:", fcstRow);
+  return fcstRow;
 }
 
 // FcstData 테이블에서 데이터를 조회하는 함수
 async function selectFcstData() {
   try {
-    const query = "SELECT * FROM FcstData";
+    const query = "n";
     const result = await pool.query(query);
     return result.rows;
   } catch (error) {
@@ -198,23 +223,27 @@ async function selectFcstData() {
 // 데이터를 PlaceList 테이블에 삽입하는 함수
 async function insertPlaceListData(dataArray) {
   try {
-    const insertDataQuery = `
-      INSERT INTO PlaceList (CATEGORY,AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-
+    // 모든 삽입 프로미스를 저장할 배열
+    const insertPromises = [];
     // dataArray를 map으로 순회하며 각 데이터를 삽입
-    const insertPromises = dataArray.map(async (data) => {
+    dataArray.forEach((data) => {
+      const insertDataQuery = `
+        INSERT INTO PlaceList (CATEGORY, CODE,  AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
       const values = [
         data.CATEGORY,
+        data.CODE,
         data.AREA_NM,
         data.AREA_CONGEST_LVL,
         data.AREA_CONGEST_MSG,
         data.AREA_DATA_TIME,
         JSON.stringify(data.FCST_PPLTN),
       ];
+      console.log(values);
 
-      return pool.query(insertDataQuery, values);
+      // 각 데이터에 대한 삽입 프로미스를 생성하여 배열에 추가
+      insertPromises.push(pool.query(insertDataQuery, values));
     });
 
     // 모든 삽입 프로미스를 병렬로 실행
@@ -227,6 +256,7 @@ async function insertPlaceListData(dataArray) {
     throw error;
   }
 }
+
 // PlaceList 테이블에서 데이터를 조회하는 함수
 async function selectPlaceListData() {
   try {
@@ -241,8 +271,12 @@ async function selectPlaceListData() {
 module.exports = {
   deleteAllCityData,
   updateCityData,
-  insertCityData,
   selectCityData,
+  selectPinDataByCode,
+  checkScrapLimit,
+  checkIfAlreadyScrapped,
+  insertScrappedPlace,
+  deleteScrappedPlace,
   selectCityDataByCategory,
   updateRecommendationPlace,
   insertFcstData,
