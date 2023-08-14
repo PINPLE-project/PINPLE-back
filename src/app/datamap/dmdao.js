@@ -68,46 +68,6 @@ async function selectPinDataByCode(connection, placeCode) {
  *  장소 스크랩
  */
 //스크랩 가능한 장소 개수 확인 (최대 3개)
-async function checkScrapLimit(connection) {
-  const selectScrapCountQuery = `
-    SELECT COUNT(*) AS count 
-    FROM scrapPlace
-  `;
-  const [selectScrapCountrows] = await connection.query(selectScrapCountQuery);
-  const currentScrapCount = selectScrapCountrows[0].count;
-  return currentScrapCount < 3; // 최대 스크랩 가능 개수는 3개
-}
-
-//이미 스크랩한 장소인지 확인
-async function checkIfAlreadyScrapped(connection, placeCode) {
-  const selectScrapQuery = `
-    SELECT * FROM scrapPlace
-    WHERE CODE = ?
-  `;
-  const [selectScraprows] = await connection.query(selectScrapQuery, [
-    placeCode,
-  ]);
-  return selectScraprows.length > 0;
-}
-
-//장소 스크랩 추가
-async function insertScrappedPlace(connection, placeCode) {
-  const insertScrapQuery = `
-    INSERT INTO scrapPlace (placeCode) 
-    VALUES (?)
-  `;
-  await connection.query(insertScrapQuery, [placeCode]);
-}
-
-// 장소 스크랩 삭제
-async function deleteScrappedPlace(connection, placeCode) {
-  const deleteScrapQuery = `
-    DELETE 
-    FROM scrapPlace 
-    WHERE CODE = ?
-  `;
-  await connection.query(deleteScrapQuery, [placeCode]);
-}
 
 // 추천장소 테이블에 데이터를 업데이트하는 함수
 async function updateRecommendationPlace(values) {
