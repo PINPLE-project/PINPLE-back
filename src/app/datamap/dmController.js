@@ -163,7 +163,45 @@ exports.pinclickByCode = async function (req, res) {
  * Name: 장소 스크랩 (클릭한 장소)
  * [GET] /app/pinclick/:code/scrap
  */
+// 유저 아이디는 JWT 토큰으로 넘겨받고, 데이터 지도에서 스크랩할 place_id를 파라미터로 넘겨주면 scrap db에 저장되는 형식입니다!
+/**
+ * API No.
+ * Name: 데이터 지도 스크랩
+ * [POST] /app/map/:place_id/scrap
+ */
+exports.postScrap = async function (req, res) {
+  const userId = req.verifiedToken.userId; // 현재 로그인한 userId
+  const placeId = req.params.place_id;
+  console.log(userId, placeId);
+  const scrapResult = await dmService.createScrap(userId, placeId);
+  return res.send(response(responseStatus.SUCCESS, scrapResult));
+};
 
+/**
+ * API No.
+ * Name: 스크랩 조회
+ * [GET] /app/myPage/scrap
+ */
+exports.getScrap = async function (req, res) {
+  const userId = req.verifiedToken.userId; // 현재 로그인한 userId
+  const scrapResult = await dmProvider.retrieveScrap(userId);
+  return res.send(response(responseStatus.SUCCESS, scrapResult));
+};
+
+/**
+ * API No.
+ * Name: 스크랩 삭제
+ * [DELETE] /app/map/:place_id/scrap
+ */
+exports.deleteScrap = async function (req, res) {
+  const userId = req.verifiedToken.userId; // 현재 로그인한 userId
+  const placeId = req.params.place_id;
+
+  // if (!placeId) return res.send(errResponse(baseResponse.SCRAP_PLACEID_EMPTY));
+
+  const deleteScrapResponse = await dmService.deleteScrap(userId, placeId);
+  return res.send(deleteScrapResponse);
+};
 /**
  * API No. 2
  * Name: 상세보기_혼잡도전망 API

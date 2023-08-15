@@ -72,9 +72,18 @@ async function selectFcstData() {
   connection.release();
   return fcstData;
 }
+//스크랩
+async function retrieveScrap(userId) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  const scrapResult = await userDao.selectScraps(connection, userId);
+  connection.release();
+
+  return scrapResult;
+}
 
 module.exports = {
   updateAllCityData,
   sortDataByCongestion,
   selectFcstData,
+  retrieveScrap,
 };
