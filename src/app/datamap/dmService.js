@@ -62,8 +62,20 @@ async function deleteScrap(userId, placeId) {
   }
 }
 
+//상세보기
+async function createDetails(placeCode) {
+  try {
+    const { markerDetails, recommendationPlaces } =
+      await dmProvider.retrieveDetails(placeCode);
+    return { markerDetails, recommendationPlaces };
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   createclickPin,
   createScrap,
   deleteScrap,
+  createDetails,
 };

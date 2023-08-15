@@ -145,7 +145,7 @@ exports.getAllCityData = async function (req, res) {
  * [GET] /app/pinclick/:code
  */
 
-exports.pinclickByCode = async function (req, res) {
+exports.getpinclickByCode = async function (req, res) {
   const placeCode = req.params.code; // URL 파라미터에서 이름 가져오기
   try {
     const placeData = await dmService.createclickPin(placeCode);
@@ -157,15 +157,32 @@ exports.pinclickByCode = async function (req, res) {
     return res.send(errResponse(responseStatus.SERVER_ERROR));
   }
 };
-
 /**
  * API No. 3
- * Name: 장소 스크랩 (클릭한 장소)
- * [GET] /app/pinclick/:code/scrap
+ * Name: 상세보기
+ * [GET] /app/pinclick/:code/details
  */
+exports.getDetails = async function (req, res) {
+  const placeCode = req.params.code;
+
+  try {
+    const { markerDetails, recommendationPlaces } =
+      await dmService.createDetails(placeCode);
+
+    console.log("Marker Details:", markerDetails);
+    console.log("Random Places:", recommendationPlaces);
+    return res.send(
+      response(responseStatus.SUCCESS, { markerDetails, recommendationPlaces })
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    return res.send(errResponse(responseStatus.SERVER_ERROR));
+  }
+};
+
 // 유저 아이디는 JWT 토큰으로 넘겨받고, 데이터 지도에서 스크랩할 place_id를 파라미터로 넘겨주면 scrap db에 저장되는 형식입니다!
 /**
- * API No.
+ * API No.4
  * Name: 데이터 지도 스크랩
  * [POST] /app/map/:place_id/scrap
  */
@@ -178,7 +195,7 @@ exports.postScrap = async function (req, res) {
 };
 
 /**
- * API No.
+ * API No.5
  * Name: 스크랩 조회
  * [GET] /app/myPage/scrap
  */
@@ -189,7 +206,7 @@ exports.getScrap = async function (req, res) {
 };
 
 /**
- * API No.
+ * API No.6
  * Name: 스크랩 삭제
  * [DELETE] /app/map/:place_id/scrap
  */
@@ -202,69 +219,9 @@ exports.deleteScrap = async function (req, res) {
   const deleteScrapResponse = await dmService.deleteScrap(userId, placeId);
   return res.send(deleteScrapResponse);
 };
-/**
- * API No. 2
- * Name: 상세보기_혼잡도전망 API
- * [GET] /app/citydata/details/fcst
- */
-exports.getFcstData = async function (req, res) {
-  console.log("실행되긴하니?");
-  const FcstData = await dmProvider.selectFcstData();
-  return res.send(response(baseResponse.SUCCESS, FcstData));
-};
 
 /**
- * API No. 3
- * Name: 상세보기_인근핀 API
- * [GET] /app/citydata/details/pin
- */
-
-/**
- * API No. 4
- * Name: 상세보기_추천장소 API
- * [GET] /app/citydata/details/:category
- */
-exports.getCityDataByCategory = async function (req, res) {
-  try {
-    const category = req.params.category;
-    const categoryData = await getCategoryData(category);
-
-    // Shuffle the categoryData array to get a random order of locations
-    shuffleArray(categoryData);
-
-    // Get the first 3 locations from the shuffled array
-    const randomLocations = categoryData.slice(0, 3);
-    randomLocations.map(async (data) => {
-      const values = [
-        data.CATEGORY,
-        data.CODE,
-        data.AREA_NM,
-        data.AREA_CONGEST_LVL,
-        data.AREA_CONGEST_MSG,
-        data.AREA_DATA_TIME,
-        JSON.stringify(data.FCST_PPLTN),
-      ];
-      await dmDao.updateRecommendationPlace(values);
-    });
-
-    console.log(`Category Data for ${category}:`, randomLocations); // Log the randomly selected locations
-
-    return res.send(response(responseStatus.SUCCESS, randomLocations));
-  } catch (error) {
-    console.error("Error:", error);
-    return res.send(errResponse(responseStatus.SERVER_ERROR));
-  }
-};
-
-// Function to shuffle an array randomly
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-}
-/**
- * API No. 5
+ * API No. 7
  * Name: 장소 목록 API (혼잡도 높은순, 혼잡도 낮은순, 가나다순)
  * [GET] /app/citydata/list?sortby={}
  */

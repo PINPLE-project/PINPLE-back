@@ -75,10 +75,33 @@ async function selectFcstData() {
 //스크랩
 async function retrieveScrap(userId) {
   const connection = await pool.getConnection(async (conn) => conn);
-  const scrapResult = await userDao.selectScraps(connection, userId);
+  const scrapResult = await dmDao.selectScraps(connection, userId);
   connection.release();
 
   return scrapResult;
+}
+
+//상세보기 조회 (장소 정보, 혼잡도 전망, 추천장소)
+async function retrieveDetails(placeCode) {
+  try {
+    const connection = await pool.getConnection(async (conn) => conn);
+
+    const markerDetails = await dmDao.selectMarkerDetails(
+      connection,
+      placeCode
+    );
+    const category = markerDetails[0].CATEGORY;
+    console.log("마커카테고리", category);
+    const recommendationPlaces = await dmDao.selectRecommendationPlaces(
+      connection,
+      category
+    );
+    connection.release();
+
+    return { markerDetails, recommendationPlaces };
+  } catch (error) {
+    throw error;
+  }
 }
 
 module.exports = {
@@ -86,4 +109,5 @@ module.exports = {
   sortDataByCongestion,
   selectFcstData,
   retrieveScrap,
+  retrieveDetails,
 };
