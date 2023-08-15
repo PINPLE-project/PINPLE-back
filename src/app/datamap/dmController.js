@@ -223,18 +223,17 @@ exports.deleteScrap = async function (req, res) {
 /**
  * API No. 7
  * Name: 장소 목록 API (혼잡도 높은순, 혼잡도 낮은순, 가나다순)
- * [GET] /app/citydata/list?sortby={}
+ * [GET] /app/list/:sortby
  */
 
-exports.getCityDataSorted = async function (req, res) {
-  try {
-    const sortBy = req.query.sortby;
-    const sortedData = await dmProvider.sortDataByCongestion(sortBy);
-    console.log(`Sorted Data (Sort By: ${sortBy}):`, sortedData);
+exports.getCityDataList = async function (req, res) {
+  const sortBy = req.query.sortby;
 
-    return res.send(response(responseStatus.SUCCESS, sortedData));
+  try {
+    const cityDataList = await dmService.createCityList(sortBy);
+    return res.send(cityDataList);
   } catch (error) {
     console.error("Error:", error);
-    return res.send(errResponse(responseStatus.SERVER_ERROR));
+    return res.sendStatus(500);
   }
 };

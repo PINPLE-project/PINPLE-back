@@ -98,53 +98,6 @@ async function selectRecommendationPlaces(connection, category, limit = 3) {
   return recommendationPlacesRows;
 }
 
-// 데이터를 PlaceList 테이블에 삽입하는 함수
-async function insertPlaceListData(dataArray) {
-  try {
-    // 모든 삽입 프로미스를 저장할 배열
-    const insertPromises = [];
-    // dataArray를 map으로 순회하며 각 데이터를 삽입
-    dataArray.forEach((data) => {
-      const insertDataQuery = `
-        INSERT INTO PlaceList (CATEGORY, CODE,  AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `;
-      const values = [
-        data.CATEGORY,
-        data.CODE,
-        data.AREA_NM,
-        data.AREA_CONGEST_LVL,
-        data.AREA_CONGEST_MSG,
-        data.AREA_DATA_TIME,
-        JSON.stringify(data.FCST_PPLTN),
-      ];
-      console.log(values);
-
-      // 각 데이터에 대한 삽입 프로미스를 생성하여 배열에 추가
-      insertPromises.push(pool.query(insertDataQuery, values));
-    });
-
-    // 모든 삽입 프로미스를 병렬로 실행
-    await Promise.all(insertPromises);
-
-    // 성공적으로 삽입된 경우 반환
-    return true;
-  } catch (error) {
-    // 삽입 중 오류가 발생한 경우 에러를 던짐
-    throw error;
-  }
-}
-
-// PlaceList 테이블에서 데이터를 조회하는 함수
-async function selectPlaceListData() {
-  try {
-    const selectDataQuery = "SELECT * FROM PlaceList";
-    const result = await pool.query(selectDataQuery);
-    return result.rows;
-  } catch (error) {
-    throw error;
-  }
-}
 // erd cloud에 업로드한 table 형태 참고해서 insert하고 select하도록 했습니다! 편하신대로 수정하셔도 괜찮습니다!
 async function insertScrap(connection, insertScrapParams) {
   const insertQuestionQuery = `
@@ -169,7 +122,7 @@ async function selectScraps(connection, userId) {
   const [questionRow] = await connection.query(selectScrapsQuery, userId);
   return questionRow;
 }
-
+//스크랩 삭제
 async function deleteScrap(connection, deleteScrapParams) {
   const deleteQuestionQuery = `
       DELETE FROM scrap
@@ -182,6 +135,27 @@ async function deleteScrap(connection, deleteScrapParams) {
   return deleteQuestionRows;
 }
 
+//장소 목록
+async function selectCityList(connection, sortBy) {
+  let orderByClause = "";
+  if (sortBy === "high") {
+    orderByClause =
+      'ORDER BY FIELD(CONGEST_LVL, "붐빔", "약간 붐빔", "보통", "여유")';
+  } else if (sortBy === "low") {
+    orderByClause =
+      'ORDER BY FIELD(CONGEST_LVL, "여유", "보통", "약간 붐빔", "붐빔")';
+  } else if (sortBy === "name") {
+    orderByClause = "ORDER BY AREA_NM";
+  }
+  const selectCityListQuery = `
+    SELECT AREA_NM, AREA_CONGEST_LVL
+    FROM citydata
+    ${orderByClause};
+  `;
+  const [cityListRows] = await connection.query(selectCityListQuery);
+  return cityListRows;
+}
+
 module.exports = {
   deleteAllCityData,
   updateCityData,
@@ -192,6 +166,5 @@ module.exports = {
   deleteScrap,
   selectMarkerDetails,
   selectRecommendationPlaces,
-  insertPlaceListData,
-  selectPlaceListData,
+  selectCityList,
 };

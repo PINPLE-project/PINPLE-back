@@ -73,9 +73,16 @@ async function createDetails(placeCode) {
   }
 }
 
+// 장소 목록
+async function createCityList(sortBy) {
+  const cityList = await dmProvider.retrieveCityList(sortBy);
+  return cityList;
+}
+
 module.exports = {
   createclickPin,
   createScrap,
   deleteScrap,
   createDetails,
+  createCityList,
 };
