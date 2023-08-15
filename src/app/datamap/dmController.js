@@ -226,12 +226,12 @@ exports.deleteScrap = async function (req, res) {
  * [GET] /app/list/:sortby
  */
 
-exports.getCityDataList = async function (req, res) {
-  const sortBy = req.query.sortby;
-
+exports.getCityList = async function (req, res) {
+  const sortBy = req.params.sortby;
   try {
-    const cityDataList = await dmService.createCityList(sortBy);
-    return res.send(cityDataList);
+    const cityList = await dmService.createCityList(sortBy);
+    console.log(cityList);
+    return res.send(cityList);
   } catch (error) {
     console.error("Error:", error);
     return res.sendStatus(500);

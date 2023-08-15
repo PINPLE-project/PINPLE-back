@@ -140,10 +140,10 @@ async function selectCityList(connection, sortBy) {
   let orderByClause = "";
   if (sortBy === "high") {
     orderByClause =
-      'ORDER BY FIELD(CONGEST_LVL, "붐빔", "약간 붐빔", "보통", "여유")';
+      'ORDER BY FIELD(AREA_CONGEST_LVL, "붐빔", "약간 붐빔", "보통", "여유")';
   } else if (sortBy === "low") {
     orderByClause =
-      'ORDER BY FIELD(CONGEST_LVL, "여유", "보통", "약간 붐빔", "붐빔")';
+      'ORDER BY FIELD(AREA_CONGEST_LVL, "여유", "보통", "약간 붐빔", "붐빔")';
   } else if (sortBy === "name") {
     orderByClause = "ORDER BY AREA_NM";
   }

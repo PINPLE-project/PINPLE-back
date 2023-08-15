@@ -7,7 +7,7 @@ module.exports = function (app) {
   app.get("/app/pinclick/:code/details", datamap.getDetails);
   // app.get("/app/citydata/details/:category", datamap.getCityDataByCategory);
   // app.get("/app/citydata/details/fcst", datamap.getFcstData);
-  app.get("/app/citydata/list", datamap.getCityDataSorted);
+  app.get("/app/list/:sortby", datamap.getCityList);
   // 임의로 라우터 uri를 정한거라 편하신대로 수정하셔도 괜찮습니다!
   // 데이터 지도 스크랩
   app.post("/app/map/:place_id/scrap", datamap.postScrap);
