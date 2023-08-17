@@ -8,13 +8,19 @@ module.exports = function(app) {
     
     // 테스트용 화면
     app.get('/login', (req, res) => {
+        // res.send(`
+        //     <h1>회원가입 및 로그인</h1>
+        //     <a href="/google/login">구글 Log in</a><br>
+        //     <a href="/google/signup">Sign up</a><br>
+        //     <a href="/auth/kakao">카카오 Log in</a><br>
+        //     <a href="/auth/kakao/unlink">카카오 탈퇴</a>
+        // `);
         res.send(`
-            <h1>회원가입 및 로그인</h1>
-            <a href="/google/login">Log in</a><br>
-            <a href="/google/signup">Sign up</a><br>
-            <a href="/auth/kakao">카카오 Log in</a><br>
-            <a href="/auth/kakao/unlink">카카오 탈퇴</a>
-        `);
+        <h1>회원가입 및 로그인</h1>
+        <a href="/google/login">구글 Log in</a><br>
+        <a href="/auth/kakao">카카오 Log in</a><br>
+        <a href="/auth/kakao/unlink">Logout</a>
+    `);
     });
 
     // 구글 로그인 API
