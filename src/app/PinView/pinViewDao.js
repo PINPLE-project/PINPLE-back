@@ -186,6 +186,7 @@ async function deletePinLikeUser(connection, pinId, userId) {
 module.exports = {
   insertPin,
   selectPin,
+  insertNearByPin,
   selectPinById,
   deleteRecentPin,
   insertRecentPin,

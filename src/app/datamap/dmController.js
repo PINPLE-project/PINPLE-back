@@ -74,8 +74,8 @@ async function getCategoryData(category) {
     categoryUrls = urls[category] || [];
   }
 
-  const responsePromises = categoryUrls.map(async (code) => {
-    const url = `http://openapi.seoul.go.kr:8088/72655a6f586a6a7539344e4a6f6755/xml/citydata/1/5/${code}`;
+  const responsePromises = categoryUrls.map(async (placeId) => {
+    const url = `http://openapi.seoul.go.kr:8088/72655a6f586a6a7539344e4a6f6755/xml/citydata/1/5/${placeId}`;
     const response = await axios.get(url);
     const xmlData = response.data;
     const jsonData = convert.xml2json(xmlData, { compact: true, spaces: 4 });
@@ -85,23 +85,28 @@ async function getCategoryData(category) {
 
     // cityData가 undefined인 경우 빈 객체로 초기화
     return {
-      CODE: code,
-      CATEGORY: category,
-      AREA_NM: cityData ? cityData["AREA_NM"]["_text"] : "",
-      AREA_CONGEST_LVL: cityData
+      placeId: placeId,
+      category: category,
+      placeName: cityData ? cityData["AREA_NM"]["_text"] : "",
+      congestLVL: cityData
         ? cityData["LIVE_PPLTN_STTS"]["LIVE_PPLTN_STTS"]["AREA_CONGEST_LVL"][
             "_text"
           ]
         : "",
-      AREA_CONGEST_MSG: cityData
+      congestFgrs: cityData
+        ? cityData["LIVE_PPLTN_STTS"]["LIVE_PPLTN_STTS"]["AREA_PPLTN_MAX"][
+            "_text"
+          ]
+        : "",
+      congestMSG: cityData
         ? cityData["LIVE_PPLTN_STTS"]["LIVE_PPLTN_STTS"]["AREA_CONGEST_MSG"][
             "_text"
           ]
         : "",
-      AREA_DATA_TIME: cityData
+      dataTime: cityData
         ? cityData["LIVE_PPLTN_STTS"]["LIVE_PPLTN_STTS"]["PPLTN_TIME"]["_text"]
         : "",
-      FCST_PPLTN: cityData
+      fcstData: cityData
         ? cityData["LIVE_PPLTN_STTS"]["LIVE_PPLTN_STTS"]["FCST_PPLTN"]
         : [],
     };
@@ -132,7 +137,6 @@ exports.getAllCityData = async function (req, res) {
       const categoryData = await allCategoryData[category];
       dmProvider.updateAllCityData(categoryData);
     });
-
     return res.send(response(responseStatus.SUCCESS, allCategoryData));
   } catch (error) {
     console.error("Error:", error);
@@ -142,14 +146,14 @@ exports.getAllCityData = async function (req, res) {
 /**
  * API No. 2
  * Name: 지도에서 마커 클릭 조회 API
- * [GET] /app/pinclick/:code
+ * [GET] /app/pinclick/:placeId
  */
 
-exports.getpinclickByCode = async function (req, res) {
-  const placeCode = req.params.code; // URL 파라미터에서 이름 가져오기
+exports.getpinclickByplaceId = async function (req, res) {
+  const placeId = req.params.placeId; // URL 파라미터에서 이름 가져오기
   try {
-    const placeData = await dmService.createclickPin(placeCode);
-    console.log("Place Data:", placeData); // 결과값 콘솔에 출력
+    const placeData = await dmService.createpinClick(placeId);
+    console.log("Place Data:", placeData);
 
     return res.send(response(responseStatus.SUCCESS, placeData));
   } catch (error) {
@@ -159,20 +163,27 @@ exports.getpinclickByCode = async function (req, res) {
 };
 /**
  * API No. 3
- * Name: 상세보기
- * [GET] /app/pinclick/:code/details
+ * Name: 상세보기 API (장소 정보, 추천장소, 혼잡도 전망  - 추후 12시간 + 최대)
+ * [GET] /app/pinclick/:placeId/details
  */
 exports.getDetails = async function (req, res) {
-  const placeCode = req.params.code;
+  const placeId = req.params.placeId;
 
   try {
-    const { markerDetails, recommendationPlaces } =
-      await dmService.createDetails(placeCode);
+    const { markerDetails, fcstData, maxfcst, recommendationPlaces } =
+      await dmService.createDetails(placeId);
 
     console.log("Marker Details:", markerDetails);
-    console.log("Random Places:", recommendationPlaces);
+    console.log("FcstData", fcstData);
+    console.log("MAX", maxfcst);
+    console.log("Recommend Places:", recommendationPlaces);
     return res.send(
-      response(responseStatus.SUCCESS, { markerDetails, recommendationPlaces })
+      response(responseStatus.SUCCESS, {
+        markerDetails,
+        fcstData,
+        maxfcst,
+        recommendationPlaces,
+      })
     );
   } catch (error) {
     console.error("Error:", error);
@@ -184,11 +195,11 @@ exports.getDetails = async function (req, res) {
 /**
  * API No.4
  * Name: 데이터 지도 스크랩
- * [POST] /app/map/:place_id/scrap
+ * [POST] /app/:placeId/scrap
  */
 exports.postScrap = async function (req, res) {
   const userId = req.verifiedToken.userId; // 현재 로그인한 userId
-  const placeId = req.params.place_id;
+  const placeId = req.params.placeId;
   console.log(userId, placeId);
   const scrapResult = await dmService.createScrap(userId, placeId);
   return res.send(response(responseStatus.SUCCESS, scrapResult));
@@ -208,11 +219,11 @@ exports.getScrap = async function (req, res) {
 /**
  * API No.6
  * Name: 스크랩 삭제
- * [DELETE] /app/map/:place_id/scrap
+ * [DELETE] /app/:placeId/scrap
  */
 exports.deleteScrap = async function (req, res) {
   const userId = req.verifiedToken.userId; // 현재 로그인한 userId
-  const placeId = req.params.place_id;
+  const placeId = req.params.placeId;
 
   // if (!placeId) return res.send(errResponse(baseResponse.SCRAP_PLACEID_EMPTY));
 
@@ -222,7 +233,7 @@ exports.deleteScrap = async function (req, res) {
 
 /**
  * API No. 7
- * Name: 장소 목록 API (혼잡도 높은순, 혼잡도 낮은순, 가나다순)
+ * Name: 장소 목록 API (혼잡도 높은순(default), 혼잡도 낮은순, 가나다순)
  * [GET] /app/list/:sortby
  */
 
