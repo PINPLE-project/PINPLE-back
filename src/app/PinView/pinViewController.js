@@ -112,7 +112,7 @@ exports.deletePin = async function (req, res) {
 
 exports.postPinLike = async function (req, res) {
   const pinId = req.params.pinId;
-  const userId = 1;
+  const userId = req.verifiedToken.userId;
 
   if (!userId) return res.send(errResponse(baseResponse.PINVIEW_USERID_EMPTY));
   if (!pinId) return res.send(errResponse(baseResponse.PINVIEW_PINID_EMPTY));
