@@ -1,6 +1,6 @@
 const { pool } = require("../../../config/database");
 const dmDao = require("./dmDao");
-const pinViewDao = require("./pinViewDao");
+const pinViewDao = require("../../app/PinView/pinViewDao");
 
 // citydata 테이블 업데이트
 async function updateAllCityData(categoryData) {
@@ -50,7 +50,7 @@ async function retrieveDetails(placeId) {
     }
 
     //작성된 인근핀
-    const nearbyPins = await dmDao.selectNearbyPins(connection, placeId);
+    const nearbyPins = await pinViewDao.selectNearbyPins(connection, pinId);
 
     //추천 장소
     const category = markerDetails[0].category;
