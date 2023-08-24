@@ -13,7 +13,7 @@ exports.createPin = async function (userId, longitude, latitude, address, pinCon
         const connection = await pool.getConnection(async (conn) => conn);
 
         const pinIdResult = await pinViewDao.insertPin(connection, insertPinParams);
-        const nearByPinIdResult = await pinViewDao.insertNearByPin(connection, pinId, pinCongest);
+        const nearByPinIdResult = await pinViewDao.insertNearByPin(connection);
         // console.log(`추가된 핀지도 : ${pinIdResult[0]}`)
         connection.release();
         return response(baseResponse.SUCCESS);
