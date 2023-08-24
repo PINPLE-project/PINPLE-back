@@ -84,6 +84,14 @@ module.exports = {
     message: "이미 신고한 핀리뷰입니다.",
   },
 
-
-
+  //핀지도 관련 오류
+    PINVIEW_LONGITUDE_EMPTY : {"isSuccess": false, "code": 4000, "message": "경도를 입력해주세요."},
+    PINVIEW_LATITUDE_EMPTY : {"isSuccess": false, "code": 4000, "message": "위도를 입력해주세요."},
+    PINVIEW_ADDRESS_EMPTY : {"isSuccess": false, "code": 4000, "message": "주소를 입력해주세요."},
+    PINVIEW_PINCONGEST_EMPTY : {"isSuccess": false, "code": 4000, "message": "핀 혼잡도를 입력해주세요."},
+    PINVIEW_PINFEELING_EMPTY : {"isSuccess": false, "code": 4000, "message": "핀 기분을 입력해주세요."},
+    PINVIEW_USERID_EMPTY : {"isSuccess": false, "code": 4000, "message": "userId를 입력해주세요."},
+    PINVIEW_PINID_EMPTY : {"isSuccess": false, "code": 4000, "message": "pinId를 입력해주세요."},
+    
+    PINVIEW_CONTENTS_LENGTH : {"isSuccess": false, "code": 4000, "message": "내용을 300자 이내로 입력해주세요."}
 };

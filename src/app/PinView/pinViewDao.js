@@ -13,20 +13,17 @@
   }
 
   //공공 데이터 장소와 핀지도 거리계산(인근 핀 생성)
-  // -> 핀지도에 넣을지 공공데이터에 넣을지 고민중입니다!
-  // -> 거리계산값이 정확한지 확인중입니다!
-  async function insertNearByPin(connection, pinId) {
+  async function insertNearByPin(connection) {
     const insertNearByPinQuery = `
-                      INSERT into nearByPin(pinId, placeId, pinCongest)
-                      SELECT p.pinId, c.placeId, p.pinCongest
+                      INSERT into nearByPin(pinId, placeId, pinCongest, pinCreatedAt)
+                      SELECT p.pinId, c.placeId, p.pinCongest, p.createdAt
                       FROM cityData c, pinView p
                       WHERE (6371*acos(cos(radians(p.latitude))*cos(radians(c.lat))*cos(radians(c.lng)
-                      -radians(p.longitude))+sin(radians(p.latitude))*sin(radians(c.lat)))) < 1),
+                      -radians(p.longitude))+sin(radians(p.latitude))*sin(radians(c.lat)))) < 1
                       AND pinId = (SELECT MAX(pinId) from pinView);
                 `;
     const insertNearByPinRows = await connection.query(
-      insertNearByPinQuery,
-      pinId
+      insertNearByPinQuery
     );
   
     return insertNearByPinRows;
@@ -197,6 +194,7 @@
     insertPin,
     selectPin,
     selectPinById,
+    insertNearByPin,
     deleteRecentPin,
     insertRecentPin,
     selectRecentPin,

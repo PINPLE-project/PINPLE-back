@@ -23,7 +23,7 @@ exports.postPin = async function (req, res){
      * Body: longitude, latitude, address, pinCongest, pinFeeling, contents
      */
     const {longitude, latitude, address, pinCongest, pinFeeling, contents} = req.body;
-    const userId = req.params.userId;
+    const userId = req.verifiedToken.userId;
 
     
     // 빈 값 체크
@@ -84,7 +84,7 @@ exports.getPinById = async function (req, res) {
      * Path Variable: pinId
      */
     const pinId = req.params.pinId;
-    const userId = req.params.userId;
+    const userId = req.verifiedToken.userId;
 
     if (!pinId) return res.send(errResponse(baseResponse.PINVIEW_PINID_EMPTY));
 
@@ -102,7 +102,7 @@ exports.getPinById = async function (req, res) {
 
 exports.deletePin= async function(req, res){
 
-    const userId = req.params.userId
+    const userId = req.verifiedToken.userId;
     const pinId=req.params.pinId;
 
     if (!pinId) return res.send(errResponse(baseResponse.PINVIEW_PINID_EMPTY));
@@ -122,7 +122,7 @@ exports.postPinLike= async function(req, res){
 
     
     const pinId=req.params.pinId;
-    const userId = req.params.userId;
+    const userId = req.verifiedToken.userId;
 
     if (!userId) return res.send(errResponse(baseResponse.PINVIEW_USERID_EMPTY));
     if (!pinId) return res.send(errResponse(baseResponse.PINVIEW_PINID_EMPTY));
@@ -140,7 +140,7 @@ exports.postPinLike= async function(req, res){
 
 exports.deletePinLike= async function(req, res){
 
-    const userId = req.params.userId;
+    const userId = req.verifiedToken.userId;
     const pinId=req.params.pinId;
 
     if (!userId) return res.send(errResponse(baseResponse.PINVIEW_USERID_EMPTY));
@@ -159,7 +159,7 @@ exports.deletePinLike= async function(req, res){
 
 exports.getMyPin = async function (req, res) {
 
-    const userId = req.params.userId;
+    const userId = req.verifiedToken.userId;
 
     if (!userId) return res.send(errResponse(baseResponse.PINVIEW_USERID_EMPTY));
 
@@ -175,7 +175,7 @@ exports.getMyPin = async function (req, res) {
 
 exports.deleteMyPin = async function (req, res) {
 
-    const userId = req.params.userId;
+    const userId = req.verifiedToken.userId;
     const pinId = req.params.pinId;
 
     if (!userId) return res.send(errResponse(baseResponse.PINVIEW_USERID_EMPTY));
