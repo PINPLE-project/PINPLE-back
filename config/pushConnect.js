@@ -1,9 +1,9 @@
-const admin = require("firebase-admin");
+// const admin = require("firebase-admin");
 
-let serviceAccount = require("../pinple-24129-firebase-adminsdk-kyntj-da88679fe6.json");
+// // let serviceAccount = require("../pinple-24129-firebase-adminsdk-kyntj-da88679fe6.json");
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+// });
 
-module.exports = admin;
+// module.exports = admin;

@@ -2,25 +2,26 @@ const axios = require("axios");
 const convert = require("xml-js");
 const { pool } = require("../../../config/database");
 
-//전체 도시데이터 삽입
-async function insertCityData(extractedDataArray) {
+// 공공데이터 불러오기
+async function updateCityData(connection, extractedDataArray) {
   try {
-    // 쿼리문 작성
     const insertcitydataquery = `
-      INSERT INTO citydata (CATEGORY, AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO citydata (placeId,category, placeName, congestLVL, congestFgrs, congestMSG, dataTime, fcstData)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
     // 모든 데이터를 Promise.all로 처리하여 데이터베이스에 저장
     const savePromises = extractedDataArray.map(async (data) => {
       const values = [
-        data.CATEGORY,
-        data.AREA_NM,
-        data.AREA_CONGEST_LVL,
-        data.AREA_CONGEST_MSG,
-        data.AREA_DATA_TIME,
-        JSON.stringify(data.FCST_PPLTN),
+        data.placeId,
+        data.category,
+        data.placeName,
+        data.congestLVL,
+        data.congestFgrs,
+        data.congestMSG,
+        data.dataTime,
+        JSON.stringify(data.fcstData),
       ];
-      return pool.query(insertcitydataquery, values);
+      return connection.query(insertcitydataquery, values);
     });
 
     // 모든 저장 프로미스를 병렬로 실행
@@ -33,6 +34,14 @@ async function insertCityData(extractedDataArray) {
     throw error;
   }
 }
+
+// citydata테이블 데이터 삭제 (업데이트 위해)
+async function deleteAllCityData(connection) {
+  const delectecityDataquery = "DELETE FROM citydata";
+  const deletecitydatarows = await connection.query(delectecityDataquery);
+  return deletecitydatarows;
+}
+
 //전체 도시데이터 조회
 async function selectCityData() {
   try {
@@ -43,245 +52,187 @@ async function selectCityData() {
     throw error;
   }
 }
-// citydata 테이블에 있는 모든 데이터 삭제
-async function deleteAllCityData() {
-  try {
-    const query = "DELETE FROM citydata";
-    await pool.query(query);
-  } catch (error) {
-    throw error;
-  }
-}
 
-// citydata 테이블에 데이터를 업데이트하는 함수
-async function updateCityData(dataArray) {
-  try {
-    const insertCityDataQuery = `
-      INSERT INTO citydata (CATEGORY, AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
-      VALUES (?, ?, ?, ?, ?, ?)
+//클릭한 마커의 장소 정보 조회 (by placeId)
+async function selectPinDataByplaceId(connection, placeId) {
+  const selectpinquery = `
+      SELECT c.placeId, c.category, c.placeName, c.congestLVL, c.congestMSG
+      FROM citydata c
+      WHERE c.placeId = ?
     `;
-    const savePromises = dataArray.map(async (data) => {
-      const values = [
-        data.CATEGORY,
-        data.AREA_NM,
-        data.AREA_CONGEST_LVL,
-        data.AREA_CONGEST_MSG,
-        data.AREA_DATA_TIME,
-        JSON.stringify(data.FCST_PPLTN),
-      ];
-      return pool.query(insertCityDataQuery, values);
-    });
+  const [selectpinrows] = await connection.query(selectpinquery, [placeId]);
+  return selectpinrows;
+}
 
-    await Promise.all(savePromises);
-    return true;
+// 상세보기_클릭한 장소 정보
+async function selectMarkerDetails(connection, placeId) {
+  const selectMarkerDetailsQuery = `
+    SELECT c.placeId, c.category, c.placeName, c.congestLVL, c.congestMSG
+    FROM citydata c
+    WHERE c.placeId = ?;
+  `;
+  const [markerDetailsRows] = await connection.query(selectMarkerDetailsQuery, [
+    placeId,
+  ]);
+  return markerDetailsRows;
+}
+
+// 상세보기_클릭한 장소와 동일 카테고리 장소 추천 (3곳)
+async function selectRecommendationPlaces(connection, category, limit = 3) {
+  const selectRecommendationPlacesQuery = `
+    SELECT c.category, c.placeName, c.congestLVL
+    FROM citydata c
+    WHERE c.category = ?
+    ORDER BY RAND()
+    LIMIT ?;
+  `;
+  const [recommendationPlacesRows] = await connection.query(
+    selectRecommendationPlacesQuery,
+    [category, limit]
+  );
+  return recommendationPlacesRows;
+}
+
+//혼잡도 전망 조회 (12시간 후 까지)
+async function selectFcstData(connection, index, placeId) {
+  const selectFcstquery = `
+    SELECT
+        JSON_UNQUOTE(JSON_EXTRACT(fcstData, CONCAT('$.FCST_PPLTN[', ? ,'].FCST_TIME._text'))) AS fcstTime,
+        CAST(JSON_UNQUOTE(JSON_EXTRACT(fcstData, CONCAT('$.FCST_PPLTN[', ? ,'].FCST_PPLTN_MAX._text'))) AS UNSIGNED) AS fcstMax,
+        CAST(JSON_UNQUOTE(JSON_EXTRACT(fcstData, CONCAT('$.FCST_PPLTN[', ? ,'].FCST_PPLTN_MIN._text'))) AS UNSIGNED) AS fcstMin,
+        JSON_UNQUOTE(JSON_EXTRACT(fcstData, CONCAT('$.FCST_PPLTN[', ? ,'].FCST_CONGEST_LVL._text'))) AS fcstCongestLVL
+    FROM citydata c
+    WHERE c.placeId = ?;
+  `;
+  const values = [placeId];
+  try {
+    const [fcstRows] = await connection.query(selectFcstquery, [
+      index,
+      index,
+      index,
+      index,
+      values,
+    ]);
+    return fcstRows;
   } catch (error) {
     throw error;
   }
 }
 
-// 추천장소 테이블에 데이터를 업데이트하는 함수
-async function updateRecommendationPlace(values) {
+// 인근 핀 조회
+async function selectNearbyPins(connection, placeId) {
+  const selectNearbyPinsQuery = `
+    SELECT n.pinId, n.pinCongest, n.createdAt
+    FROM nearByPin n
+    WHERE placeId = ?;
+  `;
   try {
-    const insertRecommendationQuery = `
-      INSERT INTO recommendationPlace (CATEGORY, AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-
-    // const values = [
-    //   data.CATEGORY,
-    //   data.AREA_NM,
-    //   data.AREA_CONGEST_LVL,
-    //   data.AREA_CONGEST_MSG,
-    //   data.AREA_DATA_TIME,
-    //   JSON.stringify(data.FCST_PPLTN),
-    // ];
-    await pool.query(insertRecommendationQuery, values);
-    // dataArray.map(async (data) => {
-    //   console.log(data);
-    //   const values = [
-    //     data.CATEGORY,
-    //     data.AREA_NM,
-    //     data.AREA_CONGEST_LVL,
-    //     data.AREA_CONGEST_MSG,
-    //     data.AREA_DATA_TIME,
-    //     JSON.stringify(data.FCST_PPLTN),
-    //   ];
-    //   await pool.query(insertRecommendationQuery, values);
-    // });
-
-    // const updatePromises = dataArray.map(async (data) => {
-    //     const values = [
-    //         data.CATEGORY,
-    //         data.AREA_NM,
-    //         data.AREA_CONGEST_LVL,
-    //         data.AREA_CONGEST_MSG,
-    //         data.AREA_DATA_TIME,
-    //         JSON.stringify(data.FCST_PPLTN),
-    //     ];
-    //     return pool.query(insertRecommendationQuery, values);
-    // });
-
-    // await Promise.all(updatePromises);
-
-    // 성공적으로 저장된 경우 반환
-    return true;
-  } catch (error) {
-    // 저장 중 오류가 발생한 경우 에러를 던짐
-    throw error;
-  }
-}
-
-// citydata 테이블에서 해당 카테고리 데이터를 추출하는 함수
-async function selectCityDataByCategory(category) {
-  try {
-    const selectCityDatabyCategoryquery =
-      "SELECT * FROM citydata WHERE CATEGORY = ?";
-    const values = [category];
-    const result = await pool.query(selectCityDatabyCategoryquery, values);
-    return result.rows;
-  } catch (error) {
-    throw error;
-  }
-}
-
-// 추천장소 테이블에 데이터를 업데이트하는 함수
-async function updateRecommendationPlace(dataArray) {
-  try {
-    const insertRecommendationQuery = `
-      INSERT INTO recommendationPlace (CATEGORY, AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    // 성공적으로 저장된 경우 반환
-    return pool.query(insertRecommendationQuery, dataArray);
-  } catch (error) {
-    // 저장 중 오류가 발생한 경우 에러를 던짐
-    throw error;
-  }
-}
-// 데이터를 FcstData 테이블에 삽입하는 함수
-async function insertFcstData(dataArray) {
-  try {
-    const insertDataQuery = `
-            INSERT INTO FcstData (AREA_NM, FCST_PPLTN)
-            VALUES (?, ?)
-        `;
-
-    // dataArray를 map으로 순회하며 각 데이터를 삽입
-    const insertPromises = dataArray.map(async (data) => {
-      const values = [data.AREA_NM, JSON.stringify(data.FCST_PPLTN)];
-
-      return pool.query(insertDataQuery, values);
-    });
-
-    // 모든 삽입 프로미스를 병렬로 실행
-    await Promise.all(insertPromises);
-
-    // 성공적으로 삽입된 경우 반환
-    return true;
-  } catch (error) {
-    // 삽입 중 오류가 발생한 경우 에러를 던짐
-    throw error;
-  }
-}
-
-// FcstData 테이블에서 데이터를 조회하는 함수
-async function selectFcstData() {
-  try {
-    const query = "SELECT * FROM FcstData";
-    const result = await pool.query(query);
-    return result.rows;
-  } catch (error) {
-    throw error;
-  }
-}
-
-// 데이터를 PlaceList 테이블에 삽입하는 함수
-async function insertPlaceListData(dataArray) {
-  try {
-    const insertDataQuery = `
-      INSERT INTO PlaceList (CATEGORY,AREA_NM, AREA_CONGEST_LVL, AREA_CONGEST_MSG, AREA_DATA_TIME, FCST_PPLTN)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-
-    // dataArray를 map으로 순회하며 각 데이터를 삽입
-    const insertPromises = dataArray.map(async (data) => {
-      const values = [
-        data.CATEGORY,
-        data.AREA_NM,
-        data.AREA_CONGEST_LVL,
-        data.AREA_CONGEST_MSG,
-        data.AREA_DATA_TIME,
-        JSON.stringify(data.FCST_PPLTN),
-      ];
-
-      return pool.query(insertDataQuery, values);
-    });
-
-    // 모든 삽입 프로미스를 병렬로 실행
-    await Promise.all(insertPromises);
-
-    // 성공적으로 삽입된 경우 반환
-    return true;
-  } catch (error) {
-    // 삽입 중 오류가 발생한 경우 에러를 던짐
-    throw error;
-  }
-}
-// PlaceList 테이블에서 데이터를 조회하는 함수
-async function selectPlaceListData() {
-  try {
-    const selectDataQuery = "SELECT * FROM PlaceList";
-    const result = await pool.query(selectDataQuery);
-    return result.rows;
+    const [nearbyPinsRows] = await connection.query(
+      selectNearbyPinsQuery,
+      placeId
+    );
+    return nearbyPinsRows;
   } catch (error) {
     throw error;
   }
 }
 
 // erd cloud에 업로드한 table 형태 참고해서 insert하고 select하도록 했습니다! 편하신대로 수정하셔도 괜찮습니다!
-async function insertScrap(connection, insertScrapParams){
+async function insertScrap(connection, insertScrapParams) {
   const insertQuestionQuery = `
-          INSERT INTO scrap(userId, place_id) 
+          INSERT INTO scrap(userId, placeId) 
           VALUES(?, ?);
   `;
-
-  const insertScrapRows = await connection.query(insertQuestionQuery, insertScrapParams);
+  const insertScrapRows = await connection.query(
+    insertQuestionQuery,
+    insertScrapParams
+  );
   return insertScrapRows;
 }
 
+// 스크랩 가능한 장소 개수 확인 (최대 3개)
+async function selectScrapLimit(connection, userId) {
+  const selectScrapCountQuery = `
+    SELECT COUNT(*) AS count 
+    FROM scrap s
+    WHERE s.userId = ?
+  `;
+  const [selectScrapCountrows] = await connection.query(
+    selectScrapCountQuery,
+    userId
+  );
+  const currentScrapCount = selectScrapCountrows[0].count;
+  return currentScrapCount < 3; // 최대 스크랩 가능 개수는 3개
+}
+
+// 이미 스크랩한 장소인지 확인
+async function selectisScrapped(connection, placeId) {
+  const selectisScrappedQuery = `
+    SELECT * FROM scrap WHERE userId = ? AND placeId =?
+  `;
+  const [isScrappedrows] = await connection.query(selectisScrappedQuery, [
+    placeId,
+  ]);
+  return isScrappedrows.length > 0;
+}
+
 // scrap 테이블에 저장된 place_id로 db에 저장된 citydata를 조회하도록 했습니다!
-async function selectScraps(connection, userId){
+async function selectScraps(connection, userId) {
   const selectScrapsQuery = `
-      SELECT c.area_nm, c.road_addr, c.area_congest_lvl
-      FROM citydata c JOIN scrap s ON c.place_id = s.place_id
+      SELECT c.placeName, c.congestLVL
+      FROM citydata c JOIN scrap s ON c.placeId = s.placeId
       where s.userId = ?;
-  `
+  `;
   const [questionRow] = await connection.query(selectScrapsQuery, userId);
   return questionRow;
 }
-
-async function deleteScrap(connection, deleteScrapParams){
+//스크랩 삭제
+async function deleteScrap(connection, deleteScrapParams) {
   const deleteQuestionQuery = `
       DELETE FROM scrap
-      WHERE userId = ? AND place_id =?;
-  `
-  const deleteQuestionRows = await connection.query(deleteQuestionQuery, deleteScrapParams);
+      WHERE userId = ? AND placeId =?;
+  `;
+  const deleteQuestionRows = await connection.query(
+    deleteQuestionQuery,
+    deleteScrapParams
+  );
   return deleteQuestionRows;
+}
 
+//장소 목록 (혼잡도 높은 순(default), 낮은 순, 가나다 순)
+async function selectCityList(connection, sortBy) {
+  let orderByClause = "";
+  if (sortBy === "high") {
+    orderByClause =
+      'ORDER BY FIELD(congestLVL, "붐빔", "약간 붐빔", "보통", "여유"), congestFgrs DESC'; //congestLVL이 동일한 경우 congestFgrs 숫자가 큰 순서대로
+  } else if (sortBy === "low") {
+    orderByClause = orderByClause =
+      'ORDER BY FIELD(congestLVL, "여유", "보통", "약간 붐빔", "붐빔"), congestFgrs ASC'; //congestLVL이 동일한 경우 congestFgrs 숫자가 작은 순서대로
+  } else if (sortBy === "name") {
+    orderByClause = "ORDER BY placeName";
+  }
+  const selectCityListQuery = `
+    SELECT c.placeName, c.congestLVL
+    FROM citydata c
+    ${orderByClause};
+  `;
+  const [cityListRows] = await connection.query(selectCityListQuery);
+  return cityListRows;
 }
 
 module.exports = {
   deleteAllCityData,
   updateCityData,
-  insertCityData,
   selectCityData,
-  selectCityDataByCategory,
-  updateRecommendationPlace,
-  insertFcstData,
-  selectFcstData,
-  insertPlaceListData,
-  selectPlaceListData,
+  selectPinDataByplaceId,
+  selectScrapLimit,
+  selectisScrapped,
   insertScrap,
   selectScraps,
-  deleteScrap
+  deleteScrap,
+  selectMarkerDetails,
+  selectFcstData,
+  selectNearbyPins,
+  selectRecommendationPlaces,
+  selectCityList,
 };

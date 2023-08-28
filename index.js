@@ -1,4 +1,4 @@
-const cors = require('cors');
+const cors = require("cors");
 const express = require("./config/express");
 
 const port = 4000;

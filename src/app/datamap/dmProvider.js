@@ -1,92 +1,89 @@
 const { pool } = require("../../../config/database");
 const dmDao = require("./dmDao");
+const pinViewDao = require("../../app/PinView/pinViewDao");
 
-// citydata 테이블의 모든 데이터를 삭제하고 새로운 데이터를 추가하는 함수
-async function updateAllCityData(cityData) {
-    try {
-        await dmDao.deleteAllCityData();
-        await dmDao.updateCityData(cityData);
-    } catch (error) {
-        throw error;
-    }
-}
-// 혼잡도 레벨에 따라 우선순위를 반환하는 함수
-function getCongestLevelPriority(congestLvl) {
-    switch (congestLvl) {
-        case '붐빔':
-            return 4;
-        case '약간 붐빔':
-            return 3;
-        case '보통':
-            return 2;
-        case '여유' :
-            return 1;
-        default:
-            return 0;
-    }
-}
-
-// 혼잡도에 따라 데이터를 정렬하는 함수
-function sortDataByCongestion(dataArray, sortBy) {
-    switch (sortBy) {
-        case "congestion_high": // 혼잡도 높은 순으로 정렬
-            dataArray.sort((a, b) => {
-                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
-                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
-                return bCongestLvl - aCongestLvl;
-            });
-            break;
-        case "congestion_low": // 혼잡도 낮은 순으로 정렬
-            dataArray.sort((a, b) => {
-                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
-                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
-                return aCongestLvl - bCongestLvl;
-            });
-            break;
-        case "area_name": // 지역명 가나다 순으로 정렬
-            dataArray.sort((a, b) => {
-                return a.AREA_NM.localeCompare(b.AREA_NM);
-            });
-            break;
-        default:
-            // 기본은 혼잡도 높은 순으로 정렬
-            dataArray.sort((a, b) => {
-                const aCongestLvl = getCongestLevelPriority(a.AREA_CONGEST_LVL);
-                const bCongestLvl = getCongestLevelPriority(b.AREA_CONGEST_LVL);
-                return bCongestLvl - aCongestLvl;
-            });
-    }
-    return dataArray;
-}
-//장소 목록 업데이트 
-async function updatePlaceList(dataArray) {
-    try {
-        await dmDao.insertPlaceListData(dataArray);
-    } catch (error) {
-        throw error;
-    }
-}
-//혼잡도전망 데이터를 반환하는 함수 
-async function getFcstData() {
-    try {
-        const fcstData = await dmDao.selectFcstData();
-        return fcstData;
-    } catch (error) {
-        throw error;
-    }
-}
-
-exports.retrieveScrap = async function(userId) {
+// citydata 테이블 업데이트
+async function updateAllCityData(categoryData) {
+  try {
     const connection = await pool.getConnection(async (conn) => conn);
-    const scrapResult = await userDao.selectScraps(connection, userId);
+    await dmDao.deleteAllCityData(connection);
+    const updatedata = await dmDao.updateCityData(connection, categoryData);
+    connection.release();
+    return updatedata;
+  } catch (error) {
+    throw error;
+  }
+}
+
+//스크랩 조회 (mypage)
+async function retrieveScrap(userId) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  const scrapResult = await dmDao.selectScraps(connection, userId);
+  connection.release();
+
+  return scrapResult;
+}
+
+//상세보기 조회 (장소 정보, 혼잡도 전망, 작성된 인근핀, 추천장소)
+//12시간 전 혼잡도는 공공데이터 출력값에 없어서 구현 고민 중입니다... DB에 시간대별로 저장해두고 업데이트 하는 방식...?
+//
+async function retrieveDetails(placeId) {
+  try {
+    const connection = await pool.getConnection(async (conn) => conn);
+
+    //장소 정보
+    const markerDetails = await dmDao.selectMarkerDetails(connection, placeId);
+
+    //혼잡도 전망 : 그래프
+    const fcstData = [];
+    for (let index = 0; index < 12; index++) {
+      const result = await dmDao.selectFcstData(connection, index, placeId);
+      fcstData.push(result[0]);
+    }
+
+    //혼잡도 전망 : 향후 12시간 중 최대 혼잡 시간
+    let maxfcst = fcstData[0];
+    for (let i = 1; i < fcstData.length; i++) {
+      if (fcstData[i].fcstMax > maxfcst.fcstMax) {
+        maxfcst = fcstData[i];
+      }
+    }
+
+    //작성된 인근핀
+    const nearbyPins = await pinViewDao.selectNearbyPins(connection, pinId);
+
+    //추천 장소
+    const category = markerDetails[0].category;
+    console.log("마커카테고리", category);
+    const recommendationPlaces = await dmDao.selectRecommendationPlaces(
+      connection,
+      category
+    );
     connection.release();
 
-    return scrapResult;
+    return {
+      markerDetails,
+      fcstData,
+      maxfcst,
+      nearbyPins,
+      recommendationPlaces,
+    };
+  } catch (error) {
+    throw error;
+  }
 }
 
-
+//장소 목록
+async function retrieveCityList(sortBy) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  const cityDataList = await dmDao.selectCityList(connection, sortBy);
+  connection.release();
+  return cityDataList;
+}
 
 module.exports = {
-    updateAllCityData, sortDataByCongestion, getFcstData, updatePlaceList
+  updateAllCityData,
+  retrieveScrap,
+  retrieveDetails,
+  retrieveCityList,
 };
-
