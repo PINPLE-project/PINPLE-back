@@ -6,16 +6,6 @@ const alertService = require("../../app/Alert/alertService");
 const alertProvider = require("../../app/Alert/alertProvider");
 
 /**
- * API No. 0
- * Name: 테스트용 API
- * [GET] /app/test
- */
-
-exports.test = async function (req, res) {
-  return res.send(response(baseResponse.SUCCESS));
-};
-
-/**
  * API No. 1
  * Name: 설정된 알림 전체 조회 API
  * [GET] /app/alert/setup
@@ -23,12 +13,11 @@ exports.test = async function (req, res) {
 
 exports.getSetupAlert = async function (req, res) {
   /**
-   * JWT: userIdFromJWT
+   * JWT: userId
    */
-  const { userIdFromJWT } = req.body;
-  // const userIdFromJWT = req.verifiedToken.userId;
+  const userId = req.verifiedToken.userId;
 
-  const alertList = await alertProvider.retrieveSetupAlertList(userIdFromJWT);
+  const alertList = await alertProvider.retrieveSetupAlertList(userId);
   return res.send(response(baseResponse.SUCCESS, alertList[0]));
 };
 
@@ -41,10 +30,10 @@ exports.getSetupAlert = async function (req, res) {
 exports.postAlert = async function (req, res) {
   /**
    * Body: placeName, time
-   * JWT: userIdFromJWT
+   * JWT: userId
    */
-  const { userIdFromJWT, placeName, time } = req.body;
-  // const userIdFromJWT = req.verifiedToken.userId;
+  const { placeName, time } = req.body;
+  const userId = req.verifiedToken.userId;
 
   const placeList = await alertProvider.retrievePlaceList();
   const isValidPlace = (placeName) => {
@@ -92,15 +81,13 @@ exports.postAlert = async function (req, res) {
   // 사용자가 설정한 시간에 알림 푸시
   schedule.scheduleJob(new Date(time), async function () {
     const placeId = await alertProvider.retrievePlaceId(placeName);
-    const AlertParams = [userIdFromJWT, placeId, time];
+    const AlertParams = [userId, placeId, time];
 
     // 알림이 유효한지 확인
     const alertRows = await alertProvider.alertCheck(AlertParams);
     if (alertRows[0].length) {
       const congestionInfo = await alertProvider.getCongestionInfo(placeName);
-      const deviceToken = await alertProvider.retrieveDeviceToken(
-        userIdFromJWT
-      );
+      const deviceToken = await alertProvider.retrieveDeviceToken(userId);
 
       // 혼잡도 정보가 비어있지 않은지 확인
       if (
@@ -141,11 +128,7 @@ exports.postAlert = async function (req, res) {
     }
   });
 
-  const alertResponse = await alertService.createAlert(
-    userIdFromJWT,
-    placeName,
-    time
-  );
+  const alertResponse = await alertService.createAlert(userId, placeName, time);
 
   return res.send(alertResponse);
 };
@@ -174,12 +157,11 @@ exports.deleteAlert = async function (req, res) {
 
 exports.getRecordAlert = async function (req, res) {
   /**
-   * JWT: userIdFromJWT
+   * JWT: userId
    */
-  const { userIdFromJWT } = req.body;
-  // const userIdFromJWT = req.verifiedToken.userId;
+  const userId = req.verifiedToken.userId;
 
-  const alertList = await alertProvider.retrieveRecordAlertList(userIdFromJWT);
+  const alertList = await alertProvider.retrieveRecordAlertList(userId);
   return res.send(response(baseResponse.SUCCESS, alertList[0]));
 };
 
@@ -191,12 +173,11 @@ exports.getRecordAlert = async function (req, res) {
 
 exports.getRecordAlertByDate = async function (req, res) {
   /**
-   * JWT: userIdFromJWT
+   * JWT: userId
    * Path Variable: date
    */
-  const { userIdFromJWT } = req.body;
   const date = req.params.date;
-  // const userIdFromJWT = req.verifiedToken.userId;
+  const userId = req.verifiedToken.userId;
 
   const isValidateDate = (date) => {
     return /^\d{4}(0[1-9]|1[012])(0[1-9]|[12][0-9]|3[01])$/.test(date);
@@ -224,7 +205,7 @@ exports.getRecordAlertByDate = async function (req, res) {
   date.replace(/(\d{4})(\d{2})(\d{2})/g, "$1-$2-$3");
 
   const alertList = await alertProvider.retrieveRecordAlertListByDate(
-    userIdFromJWT,
+    userId,
     date
   );
   return res.send(response(baseResponse.SUCCESS, alertList[0]));
